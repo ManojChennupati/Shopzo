@@ -1,50 +1,93 @@
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { CartContext } from '../context/CartContext'
+import Icon from './Icon'
+import UserProfileDropdown from './UserProfileDropdown'
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext)
   const { cartCount } = useContext(CartContext)
   const navigate = useNavigate()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
     navigate('/login')
+    setMobileMenuOpen(false)
   }
 
   return (
-    <nav style={styles.nav}>
-      <div style={styles.container}>
-        <Link to="/" style={styles.logo}>Shopzo</Link>
-        <div style={styles.links}>
-          <Link to="/" style={styles.link}>Products</Link>
+    <nav className="navbar">
+      <div className="navbar-container">
+        <Link to="/" className="navbar-logo" onClick={() => setMobileMenuOpen(false)}>
+          <Icon name="shopping" size={24} className="navbar-logo-icon" />
+          <span className="navbar-logo-text">Shopzo</span>
+        </Link>
+        
+        <button 
+          className="navbar-mobile-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          <span className={`hamburger ${mobileMenuOpen ? 'active' : ''}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+
+        <div className={`navbar-menu ${mobileMenuOpen ? 'active' : ''}`}>
+          {user?.role !== 'ADMIN' && (
+            <Link to="/" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>
+              <Icon name="home" size={18} />
+              <span>Products</span>
+            </Link>
+          )}
+          
           {user ? (
             <>
-              <Link to="/cart" style={styles.link}>Cart ({cartCount})</Link>
-              <Link to="/orders" style={styles.link}>Orders</Link>
-              {user.role === 'ADMIN' && <Link to="/admin" style={styles.link}>Admin</Link>}
-              <button onClick={handleLogout} style={styles.button}>Logout</button>
+              {user.role !== 'ADMIN' && (
+                <>
+                  <Link to="/cart" className="navbar-link navbar-link-cart" onClick={() => setMobileMenuOpen(false)}>
+                    <Icon name="cart" size={18} />
+                    <span>Cart</span>
+                    {cartCount > 0 && <span className="navbar-badge">{cartCount}</span>}
+                  </Link>
+                  
+                  <Link to="/orders" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>
+                    <Icon name="package" size={18} />
+                    <span>Orders</span>
+                  </Link>
+                </>
+              )}
+              
+              {user.role === 'ADMIN' && (
+                <Link to="/admin" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>
+                  <Icon name="settings" size={18} />
+                  <span>Admin</span>
+                </Link>
+              )}
+              
+              <div className="navbar-divider"></div>
+              
+              <UserProfileDropdown user={user} onLogout={handleLogout} />
             </>
           ) : (
             <>
-              <Link to="/login" style={styles.link}>Login</Link>
-              <Link to="/register" style={styles.link}>Register</Link>
+              <Link to="/login" className="btn-secondary btn-sm navbar-auth-btn" onClick={() => setMobileMenuOpen(false)}>
+                Login
+              </Link>
+              <Link to="/register" className="btn-primary btn-sm navbar-auth-btn" onClick={() => setMobileMenuOpen(false)}>
+                Sign Up
+              </Link>
             </>
           )}
         </div>
       </div>
     </nav>
   )
-}
-
-const styles = {
-  nav: { background: 'var(--dark)', padding: '1rem 0', color: 'white', boxShadow: 'var(--shadow)', position: 'sticky', top: 0, zIndex: 1000 },
-  container: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' },
-  logo: { fontSize: '1.75rem', fontWeight: '700', color: 'var(--primary)', letterSpacing: '-0.5px' },
-  links: { display: 'flex', gap: '2rem', alignItems: 'center' },
-  link: { color: 'white', fontWeight: '500', position: 'relative', padding: '0.5rem 0' },
-  button: { background: 'var(--primary)', color: 'white', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: '600', fontSize: '0.95rem' }
 }
 
 export default Navbar

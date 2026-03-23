@@ -22,24 +22,25 @@ const userSchema = new mongoose.Schema(
         },
         phone:{
             type:String,
-            required:true
+            required:false,
+            default:''
         },
         isActive:{
            type:Boolean,
            default:true
         },
         address:{
-            street:{type:String,required:true},
-            city:{type:String,required:true},
-            state:{type:String,required:true},
-            country:{type:String,required:true},
-            zipCode:{type:String,required:true}
+            street:{type:String,required:false,default:''},
+            city:{type:String,required:false,default:''},
+            state:{type:String,required:false,default:''},
+            country:{type:String,required:false,default:''},
+            zipCode:{type:String,required:false,default:''}
         }
     },
         {timestamps:true}
    
 );
 
-const User = mongoose.model("User",userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;
 

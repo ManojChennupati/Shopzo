@@ -15,7 +15,7 @@ export const getAllProducts = async (req, res) => {
         const products = await Product.find(query)
             .skip((page - 1) * limit)
             .limit(Number(limit))
-            .sort({ createdAt: -1 });
+            .sort({ _id: -1 });
 
         const total = await Product.countDocuments(query);
 
@@ -37,7 +37,21 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
     try {
-        const product = await Product.create(req.body);
+        const { title, description, price, discountPercentage = 0, rating = 0, stock, brand = "", category = "", thumbnail = "", images = [] } = req.body;
+        
+        const product = await Product.create({
+            title,
+            description,
+            price,
+            discountPercentage,
+            rating,
+            stock,
+            brand,
+            category,
+            thumbnail,
+            images
+        });
+        
         res.status(201).json({ message: "Product created", product });
     } catch (err) {
         res.status(500).json({ message: "Failed to create product", error: err.message });

@@ -10,6 +10,7 @@ const OrderSchema = new mongoose.Schema({
         {
             productId:{type:mongoose.Schema.Types.ObjectId,ref:"Product",required:true},
             titleSnapshot:{type:String,required:true},
+            thumbnailSnapshot:{type:String,required:true},
             quantity:{type:Number,required:true},
             priceSnapshot:{type:Number,required:true}
         }
@@ -44,5 +45,5 @@ const OrderSchema = new mongoose.Schema({
 
 );
 
-const Order = mongoose.model("Order",OrderSchema);
+const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
 export default Order;

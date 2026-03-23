@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const API = axios.create({
-  baseURL: '/api'
+  baseURL: 'http://localhost:8080'
 })
 
 API.interceptors.request.use((config) => {
@@ -14,7 +14,10 @@ API.interceptors.request.use((config) => {
 
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
-  login: (data) => API.post('/auth/login', data)
+  login: (data) => API.post('/auth/login', data),
+  googleAuth: (credential) => API.post('/auth/google', { credential }),
+  getProfile: () => API.get('/auth/profile'),
+  updateProfile: (data) => API.put('/auth/profile', data)
 }
 
 export const productAPI = {
@@ -45,7 +48,21 @@ export const orderAPI = {
 export const reviewAPI = {
   create: (data) => API.post('/reviews', data),
   getByProduct: (productId) => API.get(`/reviews/${productId}`),
-  approve: (id) => API.put(`/reviews/${id}/approve`)
+  getAllByProduct: (productId) => API.get(`/reviews/admin/${productId}`),
+  approve: (id) => API.put(`/reviews/${id}/approve`),
+  delete: (id) => API.delete(`/reviews/${id}`)
+}
+
+export const adminAPI = {
+  getStats: () => API.get('/admin/stats'),
+  updateProductStock: (id, stock) => API.put(`/admin/products/${id}/stock`, { stock }),
+  updateProductPrice: (id, price) => API.put(`/admin/products/${id}/price`, { price }),
+  updateProductDiscount: (id, discountPercentage) => API.put(`/admin/products/${id}/discount`, { discountPercentage }),
+  editProduct: (id, data) => API.put(`/admin/products/${id}/edit`, data),
+  getAllProducts: (params) => API.get('/admin/products', { params }),
+  getAllOrders: () => API.get('/admin/orders'),
+  updateOrderStatus: (id, status) => API.put(`/admin/orders/${id}/status`, { orderStatus: status }),
+  updateAllProductRatings: () => API.post('/admin/products/update-ratings')
 }
 
 export default API
