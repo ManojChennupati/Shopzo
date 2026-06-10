@@ -3,6 +3,23 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { productAPI, cartAPI, reviewAPI } from '../services/api'
 import { AuthContext } from '../context/AuthContext'
 import { CartContext } from '../context/CartContext'
+import Icon from '../components/Icon'
+
+/* Inline star SVG for pixel-perfect rating display */
+const StarIcon = ({ filled, size = 18 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={filled ? '#F59E0B' : 'none'}
+    stroke={filled ? '#F59E0B' : '#D1D5DB'}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+)
 
 const ProductDetail = () => {
   const { id } = useParams()
@@ -18,6 +35,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true)
   const [addingToCart, setAddingToCart] = useState(false)
   const [buyingNow, setBuyingNow] = useState(false)
+  const [hoverRating, setHoverRating] = useState(0)
 
   useEffect(() => {
     fetchProduct()
@@ -45,15 +63,12 @@ const ProductDetail = () => {
   }
 
   const handleAddToCart = async () => {
-    if (!user) {
-      navigate('/login')
-      return
-    }
+    if (!user) { navigate('/login'); return }
     setAddingToCart(true)
     try {
       const { data } = await cartAPI.add({ productId: id, quantity })
       updateCartCount(data.cart.totalItems)
-      setMessage({ text: '✓ Added to cart successfully!', type: 'success' })
+      setMessage({ text: 'Added to cart successfully!', type: 'success' })
       setTimeout(() => setMessage({ text: '', type: '' }), 3000)
     } catch (err) {
       setMessage({ text: err.response?.data?.message || 'Failed to add to cart', type: 'error' })
@@ -63,38 +78,24 @@ const ProductDetail = () => {
   }
 
   const handleBuyNow = () => {
-    if (!user) {
-      navigate('/login')
-      return
-    }
+    if (!user) { navigate('/login'); return }
     setBuyingNow(true)
     const discountedPrice = product.price * (1 - (product.discountPercentage || 0) / 100)
     navigate('/checkout', {
       state: {
         buyNow: true,
-        product: {
-          productId: product,
-          quantity: quantity,
-          priceAtAddTime: discountedPrice
-        }
+        product: { productId: product, quantity, priceAtAddTime: discountedPrice }
       }
     })
   }
 
   const handleSubmitReview = async (e) => {
     e.preventDefault()
-    if (!user) {
-      navigate('/login')
-      return
-    }
+    if (!user) { navigate('/login'); return }
     setSubmittingReview(true)
     try {
-      await reviewAPI.create({
-        productId: id,
-        rating: reviewForm.rating,
-        comment: reviewForm.comment
-      })
-      setMessage({ text: '✓ Review submitted successfully!', type: 'success' })
+      await reviewAPI.create({ productId: id, rating: reviewForm.rating, comment: reviewForm.comment })
+      setMessage({ text: 'Review submitted successfully!', type: 'success' })
       setReviewForm({ rating: 5, comment: '' })
       fetchReviews()
       setTimeout(() => setMessage({ text: '', type: '' }), 3000)
@@ -107,89 +108,106 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div style={styles.loadingContainer}>
-        <div className="spinner spinner-large" />
-        <p style={styles.loadingText}>Loading product...</p>
+      <div className="pd-loading">
+        <Icon name="loader" size={40} />
+        <p>Loading product...</p>
       </div>
     )
   }
 
   if (!product) {
     return (
-      <div style={styles.errorContainer}>
-        <div style={styles.errorIcon}>😕</div>
-        <h2 style={styles.errorTitle}>Product not found</h2>
-        <Link to="/" style={styles.backLink}>← Back to Products</Link>
+      <div className="pd-not-found">
+        <div className="pd-not-found-icon">
+          <Icon name="package" size={36} />
+        </div>
+        <h2 className="pd-not-found-title">Product not found</h2>
+        <Link to="/" className="pd-breadcrumb" style={{ marginTop: '16px' }}>
+          <Icon name="arrowLeft" size={16} />
+          Back to Products
+        </Link>
       </div>
     )
   }
 
-  const avgRating = reviews.length > 0 
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+  const avgRating = reviews.length > 0
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0
 
+  const getInitials = (name) => name ? name.charAt(0).toUpperCase() : '?'
+
   return (
-    <div style={styles.container}>
-      <Link to="/" style={styles.breadcrumb}>← Back to Products</Link>
+    <div className="pd-page">
+      <div className="pd-inner">
+        <Link to="/" className="pd-breadcrumb">
+          <Icon name="arrowLeft" size={16} />
+          Back to Products
+        </Link>
 
-      <div style={styles.productSection}>
-        <div style={styles.imageSection}>
-          {product.thumbnail ? (
-            <img src={product.thumbnail} alt={product.title} style={styles.productImage} />
-          ) : (
-            <div style={styles.imagePlaceholder}>📦</div>
-          )}
-          {product.discountPrice && (
-            <div style={styles.discountBadge}>
-              {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
-            </div>
-          )}
-        </div>
-
-        <div style={styles.detailSection}>
-          <h1 style={styles.title}>{product.title}</h1>
-          
-          <div style={styles.ratingSection}>
-            <div style={styles.stars}>
-              {'⭐'.repeat(Math.round(avgRating))}
-              {'☆'.repeat(5 - Math.round(avgRating))}
-            </div>
-            <span style={styles.ratingText}>
-              {avgRating} ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
-            </span>
+        {/* Product Main Section */}
+        <div className="pd-main-section">
+          {/* Image */}
+          <div className="pd-image-area">
+            {product.thumbnail ? (
+              <img src={product.thumbnail} alt={product.title} className="pd-product-img" />
+            ) : (
+              <div className="pd-image-placeholder">
+                <Icon name="package" size={80} />
+              </div>
+            )}
+            {product.discountPrice && (
+              <div className="pd-discount-badge">
+                {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
+              </div>
+            )}
           </div>
 
-          <p style={styles.description}>{product.description}</p>
+          {/* Info */}
+          <div className="pd-info-area">
+            <h1 className="pd-title">{product.title}</h1>
 
-          <div style={styles.priceSection}>
-            <div style={styles.priceContainer}>
-              <span style={styles.price}>
-                ₹{product.discountPrice || product.price}
+            <div className="pd-rating-row">
+              <div className="pd-stars">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <StarIcon key={star} filled={star <= Math.round(avgRating)} size={18} />
+                ))}
+              </div>
+              <span className="pd-rating-text">
+                <span className="pd-rating-number">
+                  {avgRating > 0 ? avgRating.toFixed(1) : 'No ratings'}
+                </span>
+                {' '}({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
               </span>
-              {product.discountPrice && (
-                <span style={styles.oldPrice}>₹{product.price}</span>
-              )}
             </div>
-            <div style={{
-              ...styles.stockBadge,
-              background: product.stock > 10 ? 'var(--success)' : product.stock > 0 ? '#FFA500' : 'var(--danger)'
-            }}>
-              {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-            </div>
-          </div>
 
-          <div style={styles.actions}>
-            <div style={styles.quantitySection}>
-              <label htmlFor="quantity" style={styles.quantityLabel}>Quantity:</label>
-              <div style={styles.quantityControls}>
+            <p className="pd-description">{product.description}</p>
+
+            <div className="pd-price-box">
+              <div className="pd-price-group">
+                <span className="pd-price-current">₹{product.discountPrice || product.price}</span>
+                {product.discountPrice && (
+                  <span className="pd-price-original">₹{product.price}</span>
+                )}
+              </div>
+              <span
+                className="pd-stock-indicator"
+                style={{
+                  background: product.stock > 10 ? '#10B981' : product.stock > 0 ? '#F59E0B' : '#EF4444'
+                }}
+              >
+                {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+              </span>
+            </div>
+
+            <div className="pd-qty-section">
+              <label htmlFor="quantity" className="pd-qty-label">Quantity:</label>
+              <div className="pd-qty-controls">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  style={styles.quantityBtn}
+                  className="pd-qty-btn"
                   disabled={quantity <= 1}
                   aria-label="Decrease quantity"
-                >
-                  −
-                </button>
+                >−</button>
                 <input
                   id="quantity"
                   type="number"
@@ -197,541 +215,151 @@ const ProductDetail = () => {
                   max={product.stock}
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, Number(e.target.value))))}
-                  style={styles.quantityInput}
+                  className="pd-qty-input"
                   aria-label="Product quantity"
                 />
                 <button
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  style={styles.quantityBtn}
+                  className="pd-qty-btn"
                   disabled={quantity >= product.stock}
                   aria-label="Increase quantity"
-                >
-                  +
-                </button>
+                >+</button>
               </div>
             </div>
 
-            <div style={styles.buttonGroup}>
-              <button 
-                onClick={handleAddToCart} 
+            <div className="pd-btn-group">
+              <button
+                onClick={handleAddToCart}
                 disabled={product.stock === 0 || addingToCart}
-                style={{
-                  ...styles.addToCartBtn,
-                  ...(product.stock === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {})
-                }}
+                className="pd-add-cart-btn"
               >
-                {addingToCart ? <span className="spinner" /> : '🛒 Add to Cart'}
+                {addingToCart
+                  ? <><Icon name="loader" size={18} /><span>Adding...</span></>
+                  : <><Icon name="cart" size={18} /><span>Add to Cart</span></>
+                }
               </button>
-
-              <button 
-                onClick={handleBuyNow} 
+              <button
+                onClick={handleBuyNow}
                 disabled={product.stock === 0 || buyingNow}
-                style={{
-                  ...styles.buyNowBtn,
-                  ...(product.stock === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {})
-                }}
+                className="pd-buy-now-btn"
               >
-                {buyingNow ? <span className="spinner" /> : '⚡ Buy Now'}
+                {buyingNow
+                  ? <><Icon name="loader" size={18} /><span>Loading...</span></>
+                  : <><Icon name="zap" size={18} /><span>Buy Now</span></>
+                }
               </button>
             </div>
-          </div>
 
-          {message.text && (
-            <div style={{
-              ...styles.message,
-              background: message.type === 'success' ? '#E8F8F5' : '#FEE2E7',
-              color: message.type === 'success' ? 'var(--success-dark)' : 'var(--danger)',
-              border: `1px solid ${message.type === 'success' ? 'var(--success)' : 'var(--danger)'}`
-            }} role="alert">
-              {message.text}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div style={styles.reviewsSection}>
-        <h2 style={styles.reviewsTitle}>⭐ Customer Reviews ({reviews.length})</h2>
-        
-        {user && (
-          <div style={styles.reviewFormCard}>
-            <h3 style={styles.reviewFormTitle}>✏️ Write a Review</h3>
-            <form onSubmit={handleSubmitReview} style={styles.reviewForm}>
-              <div style={styles.ratingInputGroup}>
-                <label style={styles.ratingLabel}>Your Rating:</label>
-                <div style={styles.starRating}>
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                      style={{
-                        ...styles.starBtn,
-                        color: star <= reviewForm.rating ? '#FFD700' : '#E0E0E0'
-                      }}
-                      aria-label={`Rate ${star} stars`}
-                    >
-                      {star <= reviewForm.rating ? '★' : '☆'}
-                    </button>
-                  ))}
-                </div>
-                <span style={styles.ratingValue}>{reviewForm.rating}/5</span>
+            {message.text && (
+              <div
+                className={`pd-message ${message.type === 'success' ? 'pd-message-success' : 'pd-message-error'}`}
+                role="alert"
+              >
+                <Icon name={message.type === 'success' ? 'check' : 'alert'} size={16} />
+                {message.text}
               </div>
-              
-              <div style={styles.commentInputGroup}>
-                <label htmlFor="comment" style={styles.commentLabel}>Your Review:</label>
+            )}
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="pd-reviews-section">
+          <h2 className="pd-reviews-title">
+            <Icon name="star" size={22} />
+            Customer Reviews ({reviews.length})
+          </h2>
+
+          {user && (
+            <div className="pd-review-form-card">
+              <h3 className="pd-review-form-title">
+                <Icon name="edit" size={16} />
+                Write a Review
+              </h3>
+              <form onSubmit={handleSubmitReview} className="pd-review-form">
+                <div className="pd-star-rating-row">
+                  <span className="pd-star-label">Your Rating:</span>
+                  <div className="pd-stars-input">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="pd-star-btn"
+                        aria-label={`Rate ${star} stars`}
+                      >
+                        <StarIcon filled={star <= (hoverRating || reviewForm.rating)} size={28} />
+                      </button>
+                    ))}
+                  </div>
+                  <span className="pd-rating-val">{reviewForm.rating}/5</span>
+                </div>
+
                 <textarea
                   id="comment"
                   placeholder="Share your experience with this product..."
                   value={reviewForm.comment}
                   onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                  style={styles.commentInput}
+                  className="pd-review-textarea"
                   required
                   rows="4"
                 />
-              </div>
-              
-              <button 
-                type="submit" 
-                disabled={submittingReview || !reviewForm.comment.trim()}
-                style={{
-                  ...styles.submitReviewBtn,
-                  ...(submittingReview || !reviewForm.comment.trim() ? { opacity: 0.5, cursor: 'not-allowed' } : {})
-                }}
-              >
-                {submittingReview ? <span className="spinner" /> : '📤 Submit Review'}
-              </button>
-            </form>
-          </div>
-        )}
 
-        <div style={styles.reviewsDivider}></div>
-        
-        {reviews.length === 0 ? (
-          <div style={styles.noReviews}>
-            <div style={styles.noReviewsIcon}>💬</div>
-            <p style={styles.noReviewsText}>No reviews yet. Be the first to review this product!</p>
-          </div>
-        ) : (
-          <div style={styles.reviewsList}>
-            {reviews.map(review => (
-              <div key={review._id} style={styles.review}>
-                <div style={styles.reviewHeader}>
-                  <div>
-                    <div style={styles.reviewAuthor}>👤 {review.userId.name}</div>
-                    <div style={styles.reviewStars}>
-                      {'⭐'.repeat(review.rating)}
-                      {'☆'.repeat(5 - review.rating)}
+                <button
+                  type="submit"
+                  disabled={submittingReview || !reviewForm.comment.trim()}
+                  className="pd-submit-review-btn"
+                >
+                  {submittingReview
+                    ? <><Icon name="loader" size={16} /><span>Submitting...</span></>
+                    : <><Icon name="check" size={16} /><span>Submit Review</span></>
+                  }
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div className="pd-reviews-divider" />
+
+          {reviews.length === 0 ? (
+            <div className="pd-no-reviews">
+              <div className="pd-no-reviews-icon">
+                <Icon name="message" size={28} />
+              </div>
+              <p className="pd-no-reviews-text">No reviews yet. Be the first to review this product!</p>
+            </div>
+          ) : (
+            <div className="pd-reviews-list">
+              {reviews.map(review => (
+                <div key={review._id} className="pd-review-card">
+                  <div className="pd-review-head">
+                    <div className="pd-review-author-row">
+                      <div className="pd-reviewer-avatar">{getInitials(review.userId.name)}</div>
+                      <div>
+                        <div className="pd-reviewer-name">{review.userId.name}</div>
+                        <div className="pd-review-stars">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <StarIcon key={s} filled={s <= review.rating} size={13} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pd-review-date">
+                      {new Date(review.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                      })}
                     </div>
                   </div>
-                  <div style={styles.reviewDate}>
-                    {new Date(review.createdAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </div>
+                  <p className="pd-review-comment">{review.comment}</p>
                 </div>
-                <p style={styles.reviewComment}>{review.comment}</p>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
-}
-
-const styles = {
-  container: { 
-    padding: '2rem 1.5rem', 
-    maxWidth: '1200px', 
-    margin: '0 auto',
-    minHeight: 'calc(100vh - 80px)'
-  },
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 'calc(100vh - 80px)',
-    gap: '1rem'
-  },
-  loadingText: {
-    color: 'var(--gray)',
-    fontSize: '1.1rem'
-  },
-  errorContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 'calc(100vh - 80px)',
-    gap: '1rem',
-    textAlign: 'center'
-  },
-  errorIcon: {
-    fontSize: '4rem'
-  },
-  errorTitle: {
-    fontSize: '1.5rem',
-    color: 'var(--dark)'
-  },
-  backLink: {
-    color: 'var(--primary)',
-    fontWeight: '600',
-    fontSize: '1rem'
-  },
-  breadcrumb: {
-    display: 'inline-block',
-    color: 'var(--gray)',
-    marginBottom: '2rem',
-    fontWeight: '500',
-    transition: 'var(--transition)'
-  },
-  productSection: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '3rem',
-    marginBottom: '3rem',
-    background: 'white',
-    padding: '2rem',
-    borderRadius: 'var(--radius-lg)',
-    boxShadow: 'var(--shadow)'
-  },
-  imageSection: {
-    position: 'relative',
-    background: 'var(--light)',
-    borderRadius: 'var(--radius-lg)',
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    borderRadius: 'var(--radius-lg)'
-  },
-  imagePlaceholder: {
-    width: '100%',
-    aspectRatio: '1',
-    background: 'var(--light)',
-    borderRadius: 'var(--radius-lg)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '8rem',
-    color: 'var(--gray)'
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: '1rem',
-    right: '1rem',
-    background: 'var(--danger)',
-    color: 'white',
-    padding: '0.5rem 1rem',
-    borderRadius: '20px',
-    fontSize: '1rem',
-    fontWeight: '700',
-    boxShadow: 'var(--shadow-md)'
-  },
-  detailSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem'
-  },
-  title: {
-    fontSize: '2rem',
-    fontWeight: '700',
-    color: 'var(--dark)',
-    lineHeight: '1.2'
-  },
-  ratingSection: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem'
-  },
-  stars: {
-    fontSize: '1.2rem'
-  },
-  ratingText: {
-    color: 'var(--gray)',
-    fontSize: '0.95rem'
-  },
-  description: {
-    fontSize: '1.05rem',
-    lineHeight: '1.7',
-    color: 'var(--gray)'
-  },
-  priceSection: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '1.5rem',
-    background: 'var(--light)',
-    borderRadius: 'var(--radius-md)'
-  },
-  priceContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem'
-  },
-  price: {
-    fontSize: '2rem',
-    fontWeight: '700',
-    color: 'var(--primary)'
-  },
-  oldPrice: {
-    textDecoration: 'line-through',
-    color: 'var(--gray)',
-    fontSize: '1.25rem'
-  },
-  stockBadge: {
-    color: 'white',
-    padding: '0.5rem 1rem',
-    borderRadius: '20px',
-    fontSize: '0.9rem',
-    fontWeight: '600'
-  },
-  actions: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  },
-  quantitySection: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem'
-  },
-  quantityLabel: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: 'var(--dark)'
-  },
-  quantityControls: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  quantityBtn: {
-    width: '40px',
-    height: '40px',
-    background: 'var(--light)',
-    border: '2px solid var(--border)',
-    borderRadius: 'var(--radius-sm)',
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'var(--transition)'
-  },
-  quantityInput: {
-    width: '80px',
-    padding: '0.75rem',
-    border: '2px solid var(--border)',
-    borderRadius: 'var(--radius-sm)',
-    textAlign: 'center',
-    fontSize: '1rem',
-    fontWeight: '600'
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '1rem',
-    width: '100%'
-  },
-  addToCartBtn: {
-    flex: 1,
-    padding: '1.25rem 2rem',
-    background: 'var(--primary)',
-    color: 'white',
-    borderRadius: 'var(--radius-md)',
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'var(--transition)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    minHeight: '56px',
-    border: '2px solid var(--primary)'
-  },
-  buyNowBtn: {
-    flex: 1,
-    padding: '1.25rem 2rem',
-    background: 'linear-gradient(135deg, var(--success), var(--success-dark))',
-    color: 'white',
-    borderRadius: 'var(--radius-md)',
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'var(--transition)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    minHeight: '56px',
-    border: 'none',
-    boxShadow: '0 4px 12px rgba(6, 214, 160, 0.3)'
-  },
-  message: {
-    padding: '1rem',
-    borderRadius: 'var(--radius-md)',
-    fontSize: '1rem',
-    fontWeight: '600',
-    textAlign: 'center'
-  },
-  reviewsSection: {
-    background: 'white',
-    padding: '2.5rem',
-    borderRadius: 'var(--radius-lg)',
-    boxShadow: 'var(--shadow)'
-  },
-  reviewsTitle: {
-    fontSize: '1.75rem',
-    fontWeight: '700',
-    color: 'var(--dark)',
-    marginBottom: '2rem'
-  },
-  reviewFormCard: {
-    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-    padding: '2rem',
-    borderRadius: 'var(--radius-lg)',
-    marginBottom: '2rem',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-  },
-  reviewFormTitle: {
-    fontSize: '1.3rem',
-    fontWeight: '700',
-    color: 'var(--dark)',
-    marginBottom: '1.5rem'
-  },
-  reviewForm: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem'
-  },
-  ratingInputGroup: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem'
-  },
-  ratingLabel: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: 'var(--dark)'
-  },
-  starRating: {
-    display: 'flex',
-    gap: '0.25rem'
-  },
-  starBtn: {
-    background: 'none',
-    border: 'none',
-    fontSize: '2rem',
-    cursor: 'pointer',
-    padding: 0,
-    transition: 'all 0.2s ease',
-    lineHeight: 1
-  },
-  ratingValue: {
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    color: 'var(--primary)',
-    marginLeft: '0.5rem'
-  },
-  commentInputGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem'
-  },
-  commentLabel: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: 'var(--dark)'
-  },
-  commentInput: {
-    padding: '1rem',
-    fontSize: '1rem',
-    border: '2px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    background: 'white',
-    resize: 'vertical',
-    fontFamily: 'inherit'
-  },
-  submitReviewBtn: {
-    padding: '1rem 2rem',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    border: 'none',
-    borderRadius: 'var(--radius-md)',
-    fontSize: '1.05rem',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 4px 15px rgba(102,126,234,0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    minHeight: '50px'
-  },
-  reviewsDivider: {
-    height: '2px',
-    background: 'var(--border)',
-    margin: '2rem 0'
-  },
-  noReviews: {
-    textAlign: 'center',
-    padding: '3rem',
-    background: 'var(--light)',
-    borderRadius: 'var(--radius-md)'
-  },
-  noReviewsIcon: {
-    fontSize: '3rem',
-    marginBottom: '1rem'
-  },
-  noReviewsText: {
-    color: 'var(--gray)',
-    fontSize: '1.05rem'
-  },
-  reviewsList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem'
-  },
-  review: {
-    padding: '1.5rem',
-    border: '2px solid var(--border)',
-    borderRadius: 'var(--radius-lg)',
-    transition: 'all 0.3s ease',
-    background: 'white'
-  },
-  reviewHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '1rem'
-  },
-  reviewAuthor: {
-    fontWeight: '700',
-    color: 'var(--dark)',
-    marginBottom: '0.5rem',
-    fontSize: '1.05rem'
-  },
-  reviewStars: {
-    fontSize: '1.1rem'
-  },
-  reviewDate: {
-    color: 'var(--gray)',
-    fontSize: '0.85rem',
-    fontWeight: '500'
-  },
-  reviewComment: {
-    color: 'var(--gray)',
-    lineHeight: '1.7',
-    fontSize: '1rem'
-  }
 }
 
 export default ProductDetail

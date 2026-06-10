@@ -65,6 +65,9 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
+  Zap,
+  MessageSquare,
+  Send,
 } from 'lucide-react'
 
 const iconMap = {
@@ -135,6 +138,9 @@ const iconMap = {
   zoomIn: ZoomIn,
   zoomOut: ZoomOut,
   rotate: RotateCw,
+  zap: Zap,
+  message: MessageSquare,
+  send: Send,
 }
 
 const Icon = ({ name, size = 20, className = '', style = {}, strokeWidth = 1.75 }) => {
