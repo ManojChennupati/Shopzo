@@ -12,9 +12,12 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [reviews, setReviews] = useState([])
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' })
+  const [submittingReview, setSubmittingReview] = useState(false)
   const [message, setMessage] = useState({ text: '', type: '' })
   const [loading, setLoading] = useState(true)
   const [addingToCart, setAddingToCart] = useState(false)
+  const [buyingNow, setBuyingNow] = useState(false)
 
   useEffect(() => {
     fetchProduct()
@@ -56,6 +59,49 @@ const ProductDetail = () => {
       setMessage({ text: err.response?.data?.message || 'Failed to add to cart', type: 'error' })
     } finally {
       setAddingToCart(false)
+    }
+  }
+
+  const handleBuyNow = () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    setBuyingNow(true)
+    const discountedPrice = product.price * (1 - (product.discountPercentage || 0) / 100)
+    navigate('/checkout', {
+      state: {
+        buyNow: true,
+        product: {
+          productId: product,
+          quantity: quantity,
+          priceAtAddTime: discountedPrice
+        }
+      }
+    })
+  }
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault()
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    setSubmittingReview(true)
+    try {
+      await reviewAPI.create({
+        productId: id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment
+      })
+      setMessage({ text: '✓ Review submitted successfully!', type: 'success' })
+      setReviewForm({ rating: 5, comment: '' })
+      fetchReviews()
+      setTimeout(() => setMessage({ text: '', type: '' }), 3000)
+    } catch (err) {
+      setMessage({ text: err.response?.data?.message || 'Failed to submit review', type: 'error' })
+    } finally {
+      setSubmittingReview(false)
     }
   }
 
@@ -165,16 +211,29 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <button 
-              onClick={handleAddToCart} 
-              disabled={product.stock === 0 || addingToCart}
-              style={{
-                ...styles.addToCartBtn,
-                ...(product.stock === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {})
-              }}
-            >
-              {addingToCart ? <span className="spinner" /> : '🛒 Add to Cart'}
-            </button>
+            <div style={styles.buttonGroup}>
+              <button 
+                onClick={handleAddToCart} 
+                disabled={product.stock === 0 || addingToCart}
+                style={{
+                  ...styles.addToCartBtn,
+                  ...(product.stock === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+                }}
+              >
+                {addingToCart ? <span className="spinner" /> : '🛒 Add to Cart'}
+              </button>
+
+              <button 
+                onClick={handleBuyNow} 
+                disabled={product.stock === 0 || buyingNow}
+                style={{
+                  ...styles.buyNowBtn,
+                  ...(product.stock === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+                }}
+              >
+                {buyingNow ? <span className="spinner" /> : '⚡ Buy Now'}
+              </button>
+            </div>
           </div>
 
           {message.text && (
@@ -191,9 +250,65 @@ const ProductDetail = () => {
       </div>
 
       <div style={styles.reviewsSection}>
-        <h2 style={styles.reviewsTitle}>Customer Reviews</h2>
+        <h2 style={styles.reviewsTitle}>⭐ Customer Reviews ({reviews.length})</h2>
+        
+        {user && (
+          <div style={styles.reviewFormCard}>
+            <h3 style={styles.reviewFormTitle}>✏️ Write a Review</h3>
+            <form onSubmit={handleSubmitReview} style={styles.reviewForm}>
+              <div style={styles.ratingInputGroup}>
+                <label style={styles.ratingLabel}>Your Rating:</label>
+                <div style={styles.starRating}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                      style={{
+                        ...styles.starBtn,
+                        color: star <= reviewForm.rating ? '#FFD700' : '#E0E0E0'
+                      }}
+                      aria-label={`Rate ${star} stars`}
+                    >
+                      {star <= reviewForm.rating ? '★' : '☆'}
+                    </button>
+                  ))}
+                </div>
+                <span style={styles.ratingValue}>{reviewForm.rating}/5</span>
+              </div>
+              
+              <div style={styles.commentInputGroup}>
+                <label htmlFor="comment" style={styles.commentLabel}>Your Review:</label>
+                <textarea
+                  id="comment"
+                  placeholder="Share your experience with this product..."
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                  style={styles.commentInput}
+                  required
+                  rows="4"
+                />
+              </div>
+              
+              <button 
+                type="submit" 
+                disabled={submittingReview || !reviewForm.comment.trim()}
+                style={{
+                  ...styles.submitReviewBtn,
+                  ...(submittingReview || !reviewForm.comment.trim() ? { opacity: 0.5, cursor: 'not-allowed' } : {})
+                }}
+              >
+                {submittingReview ? <span className="spinner" /> : '📤 Submit Review'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        <div style={styles.reviewsDivider}></div>
+        
         {reviews.length === 0 ? (
           <div style={styles.noReviews}>
+            <div style={styles.noReviewsIcon}>💬</div>
             <p style={styles.noReviewsText}>No reviews yet. Be the first to review this product!</p>
           </div>
         ) : (
@@ -207,6 +322,13 @@ const ProductDetail = () => {
                       {'⭐'.repeat(review.rating)}
                       {'☆'.repeat(5 - review.rating)}
                     </div>
+                  </div>
+                  <div style={styles.reviewDate}>
+                    {new Date(review.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
                   </div>
                 </div>
                 <p style={styles.reviewComment}>{review.comment}</p>
@@ -412,7 +534,13 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '600'
   },
+  buttonGroup: {
+    display: 'flex',
+    gap: '1rem',
+    width: '100%'
+  },
   addToCartBtn: {
+    flex: 1,
     padding: '1.25rem 2rem',
     background: 'var(--primary)',
     color: 'white',
@@ -425,7 +553,26 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.5rem',
-    minHeight: '56px'
+    minHeight: '56px',
+    border: '2px solid var(--primary)'
+  },
+  buyNowBtn: {
+    flex: 1,
+    padding: '1.25rem 2rem',
+    background: 'linear-gradient(135deg, var(--success), var(--success-dark))',
+    color: 'white',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'var(--transition)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    minHeight: '56px',
+    border: 'none',
+    boxShadow: '0 4px 12px rgba(6, 214, 160, 0.3)'
   },
   message: {
     padding: '1rem',
@@ -436,7 +583,7 @@ const styles = {
   },
   reviewsSection: {
     background: 'white',
-    padding: '2rem',
+    padding: '2.5rem',
     borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow)'
   },
@@ -444,7 +591,95 @@ const styles = {
     fontSize: '1.75rem',
     fontWeight: '700',
     color: 'var(--dark)',
+    marginBottom: '2rem'
+  },
+  reviewFormCard: {
+    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+    padding: '2rem',
+    borderRadius: 'var(--radius-lg)',
+    marginBottom: '2rem',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+  },
+  reviewFormTitle: {
+    fontSize: '1.3rem',
+    fontWeight: '700',
+    color: 'var(--dark)',
     marginBottom: '1.5rem'
+  },
+  reviewForm: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem'
+  },
+  ratingInputGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem'
+  },
+  ratingLabel: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: 'var(--dark)'
+  },
+  starRating: {
+    display: 'flex',
+    gap: '0.25rem'
+  },
+  starBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '2rem',
+    cursor: 'pointer',
+    padding: 0,
+    transition: 'all 0.2s ease',
+    lineHeight: 1
+  },
+  ratingValue: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: 'var(--primary)',
+    marginLeft: '0.5rem'
+  },
+  commentInputGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  commentLabel: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: 'var(--dark)'
+  },
+  commentInput: {
+    padding: '1rem',
+    fontSize: '1rem',
+    border: '2px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    background: 'white',
+    resize: 'vertical',
+    fontFamily: 'inherit'
+  },
+  submitReviewBtn: {
+    padding: '1rem 2rem',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '1.05rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 15px rgba(102,126,234,0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    minHeight: '50px'
+  },
+  reviewsDivider: {
+    height: '2px',
+    background: 'var(--border)',
+    margin: '2rem 0'
   },
   noReviews: {
     textAlign: 'center',
@@ -452,9 +687,13 @@ const styles = {
     background: 'var(--light)',
     borderRadius: 'var(--radius-md)'
   },
+  noReviewsIcon: {
+    fontSize: '3rem',
+    marginBottom: '1rem'
+  },
   noReviewsText: {
     color: 'var(--gray)',
-    fontSize: '1rem'
+    fontSize: '1.05rem'
   },
   reviewsList: {
     display: 'flex',
@@ -463,9 +702,10 @@ const styles = {
   },
   review: {
     padding: '1.5rem',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    transition: 'var(--transition)'
+    border: '2px solid var(--border)',
+    borderRadius: 'var(--radius-lg)',
+    transition: 'all 0.3s ease',
+    background: 'white'
   },
   reviewHeader: {
     display: 'flex',
@@ -474,17 +714,23 @@ const styles = {
     marginBottom: '1rem'
   },
   reviewAuthor: {
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--dark)',
-    marginBottom: '0.25rem'
+    marginBottom: '0.5rem',
+    fontSize: '1.05rem'
   },
   reviewStars: {
-    fontSize: '1rem'
+    fontSize: '1.1rem'
+  },
+  reviewDate: {
+    color: 'var(--gray)',
+    fontSize: '0.85rem',
+    fontWeight: '500'
   },
   reviewComment: {
     color: 'var(--gray)',
-    lineHeight: '1.6',
-    fontSize: '0.95rem'
+    lineHeight: '1.7',
+    fontSize: '1rem'
   }
 }
 

@@ -10,7 +10,7 @@ const OrderSchema = new mongoose.Schema({
         {
             productId:{type:mongoose.Schema.Types.ObjectId,ref:"Product",required:true},
             titleSnapshot:{type:String,required:true},
-            thumbnailSnapshot:{type:String,required:true},
+            thumbnailSnapshot:{type:String,default:''},
             quantity:{type:Number,required:true},
             priceSnapshot:{type:Number,required:true}
         }

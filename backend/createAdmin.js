@@ -1,10 +1,14 @@
 import mongoose from "mongoose";
 import { hash } from "bcryptjs";
 import User from "./models/userModel.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const createAdmin = async () => {
   try {
-    await mongoose.connect("mongodb://localhost:27017/Shopzo");
+    const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/shopzo";
+    await mongoose.connect(MONGO_URI);
     console.log("Connected to database");
 
     // Check if admin already exists

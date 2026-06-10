@@ -6,15 +6,19 @@ const Products = () => {
   const [products, setProducts] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     fetchProducts()
-  }, [search])
+  }, [search, currentPage])
 
   const fetchProducts = async () => {
+    setLoading(true)
     try {
-      const { data } = await productAPI.getAll({ search })
+      const { data } = await productAPI.getAll({ search, page: currentPage, limit: 18 })
       setProducts(data.products)
+      setTotalPages(data.pages)
     } catch (err) {
       console.error(err)
     } finally {
@@ -73,7 +77,7 @@ const Products = () => {
         <>
           <div style={styles.resultsInfo}>
             <p style={styles.resultsText}>
-              {products.length} {products.length === 1 ? 'product' : 'products'} found
+              Showing {products.length} products • Page {currentPage} of {totalPages}
             </p>
           </div>
           <div style={styles.grid}>
@@ -118,6 +122,55 @@ const Products = () => {
               </Link>
             ))}
           </div>
+          
+          {totalPages > 1 && (
+            <div style={styles.pagination}>
+              <button 
+                onClick={() => setCurrentPage(prev => prev - 1)} 
+                disabled={currentPage === 1}
+                style={{
+                  ...styles.paginationBtn,
+                  ...(currentPage === 1 && styles.paginationBtnDisabled)
+                }}
+              >
+                <span style={styles.paginationArrow}>←</span>
+                <span>Previous</span>
+              </button>
+              
+              <div style={styles.paginationCenter}>
+                <div style={styles.paginationInfo}>
+                  <span style={styles.pageNumber}>{currentPage}</span>
+                  <span style={styles.pageSeparator}>of</span>
+                  <span style={styles.totalPages}>{totalPages}</span>
+                </div>
+                <div style={styles.pageDotsContainer}>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      style={{
+                        ...styles.pageDot,
+                        ...(currentPage === i + 1 && styles.pageDotActive)
+                      }}
+                      aria-label={`Go to page ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              <button 
+                onClick={() => setCurrentPage(prev => prev + 1)} 
+                disabled={currentPage === totalPages}
+                style={{
+                  ...styles.paginationBtn,
+                  ...(currentPage === totalPages && styles.paginationBtnDisabled)
+                }}
+              >
+                <span>Next</span>
+                <span style={styles.paginationArrow}>→</span>
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -326,6 +379,91 @@ const styles = {
   emptyText: {
     color: 'var(--gray)',
     fontSize: '1rem'
+  },
+  pagination: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '2rem',
+    marginTop: '4rem',
+    padding: '2rem 3rem',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    borderRadius: '20px',
+    boxShadow: '0 10px 40px rgba(102,126,234,0.3)'
+  },
+  paginationBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '1rem 2rem',
+    fontSize: '1rem',
+    fontWeight: '600',
+    background: 'rgba(255,255,255,0.2)',
+    color: 'white',
+    border: '2px solid rgba(255,255,255,0.3)',
+    borderRadius: '50px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    backdropFilter: 'blur(10px)'
+  },
+  paginationBtnDisabled: {
+    background: 'rgba(255,255,255,0.1)',
+    border: '2px solid rgba(255,255,255,0.1)',
+    cursor: 'not-allowed',
+    opacity: 0.4
+  },
+  paginationArrow: {
+    fontSize: '1.2rem',
+    fontWeight: 'bold'
+  },
+  paginationCenter: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1rem'
+  },
+  paginationInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    color: 'white'
+  },
+  pageNumber: {
+    fontSize: '2.5rem',
+    fontWeight: '700',
+    color: 'white',
+    textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+  },
+  pageSeparator: {
+    fontSize: '1rem',
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500'
+  },
+  totalPages: {
+    fontSize: '1.5rem',
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600'
+  },
+  pageDotsContainer: {
+    display: 'flex',
+    gap: '0.5rem',
+    alignItems: 'center'
+  },
+  pageDot: {
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    background: 'rgba(255,255,255,0.3)',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    padding: 0
+  },
+  pageDotActive: {
+    width: '16px',
+    height: '16px',
+    background: 'white',
+    boxShadow: '0 0 15px rgba(255,255,255,0.8)'
   }
 }
 

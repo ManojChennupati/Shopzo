@@ -12,7 +12,7 @@ const PaymentSchema = new mongoose.Schema({
     },
     provider:{
         type:String,
-        enum: ["razorpay", "stripe", "paypal", "cod"],
+        enum: ["razorpay", "stripe", "paypal", "cod", "debit", "card"],
         required:true,
     },
     status:{

@@ -2,10 +2,17 @@ import Order from "../models/OrderModel.js";
 import Cart from "../models/cartModel.js";
 import Product from "../models/ProductModel.js";
 import Payment from "../models/PaymentModel.js";
+import { sendOrderStatusEmail } from "../services/emailService.js";
 
 export const createOrder = async (req, res) => {
     try {
         const { shippingAddress, paymentMethod, items } = req.body;
+        
+        // Validate shipping address
+        if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || 
+            !shippingAddress.state || !shippingAddress.country || !shippingAddress.zipCode) {
+            return res.status(400).json({ message: "Complete shipping address is required" });
+        }
         
         // Handle Buy Now (direct items) or Cart checkout
         if (items && items.length > 0) {
@@ -19,13 +26,13 @@ export const createOrder = async (req, res) => {
                     return res.status(400).json({ message: `Product not available` });
                 }
                 if (product.stock < item.quantity) {
-                    return res.status(400).json({ message: `Insufficient stock for ${product.title}` });
+                    return res.status(400).json({ message: `Insufficient stock for ${product.title}. Available: ${product.stock}` });
                 }
 
                 orderItems.push({
                     productId: product._id,
                     titleSnapshot: product.title,
-                    thumbnailSnapshot: product.thumbnail,
+                    thumbnailSnapshot: product.thumbnail || '',
                     quantity: item.quantity,
                     priceSnapshot: item.priceAtAddTime
                 });
@@ -63,14 +70,14 @@ export const createOrder = async (req, res) => {
                 return res.status(400).json({ message: `Product ${item.productId} not available` });
             }
             if (product.stock < item.quantity) {
-                return res.status(400).json({ message: `Insufficient stock for ${product.title}` });
+                return res.status(400).json({ message: `Insufficient stock for ${product.title}. Available: ${product.stock}` });
             }
 
             const price = product.price * (1 - product.discountPercentage / 100);
             orderItems.push({
                 productId: product._id,
                 titleSnapshot: product.title,
-                thumbnailSnapshot: product.thumbnail,
+                thumbnailSnapshot: product.thumbnail || '',
                 quantity: item.quantity,
                 priceSnapshot: price
             });
@@ -94,6 +101,7 @@ export const createOrder = async (req, res) => {
 
         res.status(201).json({ message: "Order created", order });
     } catch (err) {
+        console.error('Create Order Error:', err);
         res.status(500).json({ message: "Failed to create order", error: err.message });
     }
 };
@@ -109,7 +117,9 @@ export const processPayment = async (req, res) => {
         }
 
         const transactionId = `TXN${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
-        const paymentSuccess = Math.random() > 0.1;
+        
+        // COD always succeeds, card/debit have 95% success rate (more realistic)
+        const paymentSuccess = provider === 'cod' ? true : Math.random() > 0.05;
 
         const payment = await Payment.create({
             orderId: order._id,
@@ -124,7 +134,7 @@ export const processPayment = async (req, res) => {
             await order.save();
             res.json({ message: "Payment successful", payment, order });
         } else {
-            res.status(400).json({ message: "Payment failed", payment });
+            res.status(400).json({ message: "Payment failed. Please try again or use a different payment method.", payment });
         }
     } catch (err) {
         res.status(500).json({ message: "Payment processing failed", error: err.message });
@@ -186,9 +196,25 @@ export const updateOrderStatus = async (req, res) => {
             req.params.id,
             { orderStatus },
             { new: true }
-        );
+        ).populate('userId', 'name email');
+        
         if (!order) return res.status(404).json({ message: "Order not found" });
-        res.json({ message: "Order status updated", order });
+        
+        // Send email notification to user
+        if (order.userId && order.userId.email) {
+            console.log(`Sending email to: ${order.userId.email}`);
+            const emailResult = await sendOrderStatusEmail(
+                order.userId.email,
+                order.userId.name,
+                order,
+                orderStatus
+            );
+            console.log('Email result:', emailResult);
+        } else {
+            console.log('No user email found, skipping email notification');
+        }
+        
+        res.json({ message: "Order status updated and email sent", order });
     } catch (err) {
         res.status(500).json({ message: "Failed to update order", error: err.message });
     }

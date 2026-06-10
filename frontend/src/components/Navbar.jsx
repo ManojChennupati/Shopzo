@@ -72,7 +72,30 @@ const Navbar = () => {
               
               <div className="navbar-divider"></div>
               
-              <UserProfileDropdown user={user} onLogout={handleLogout} />
+              {user.role === 'ADMIN' ? (
+                // Admin only sees logout button
+                <button 
+                  className="navbar-logout-btn"
+                  onClick={handleLogout}
+                  aria-label="Logout"
+                >
+                  <Icon name="logOut" size={18} />
+                  <span className="logout-text">Logout</span>
+                </button>
+              ) : (
+                // Regular users see profile dropdown + logout
+                <div className="navbar-user-section">
+                  <UserProfileDropdown user={user} onLogout={handleLogout} />
+                  <button 
+                    className="navbar-logout-btn"
+                    onClick={handleLogout}
+                    aria-label="Logout"
+                  >
+                    <Icon name="logOut" size={18} />
+                    <span className="logout-text">Logout</span>
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <>

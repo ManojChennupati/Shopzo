@@ -32,6 +32,10 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(false)
   const [showPasswordSection, setShowPasswordSection] = useState(false)
   const [fetchingProfile, setFetchingProfile] = useState(true)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
 
   useEffect(() => {
     fetchProfile()
@@ -127,84 +131,131 @@ const EditProfile = () => {
     }
   }
 
+  useEffect(() => {
+    // Check if form has changes
+    if (user) {
+      const formChanged = 
+        form.name !== user.name ||
+        form.email !== user.email ||
+        form.phone !== (user.phone || '') ||
+        form.address.street !== (user.address?.street || '') ||
+        form.address.city !== (user.address?.city || '') ||
+        form.address.state !== (user.address?.state || '') ||
+        form.address.country !== (user.address?.country || '') ||
+        form.address.zipCode !== (user.address?.zipCode || '')
+      setHasChanges(formChanged)
+    }
+  }, [form, user])
+
   if (!user || fetchingProfile) {
     return (
-      <div className="profile-container">
-        <div className="profile-content">
-          <p>Please log in to edit your profile.</p>
+      <div className="edit-profile-container">
+        <div className="edit-profile-content">
+          <div className="loading-state">
+            <div className="spinner spinner-large"></div>
+            <p>Loading profile...</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="profile-container">
-      <div className="profile-content">
-        <div className="profile-header">
-          <div>
-            <h1>Edit Profile</h1>
-            <p className="profile-subtitle">Update your personal information</p>
-          </div>
-          <button onClick={() => navigate('/profile')} className="btn-secondary">
-            <Icon name="arrowLeft" size={18} />
-            Back to Profile
+    <div className="edit-profile-container">
+      <div className="edit-profile-content">
+        <div className="edit-profile-header">
+          <button onClick={() => navigate('/profile')} className="back-button">
+            <Icon name="arrowLeft" size={20} />
           </button>
+          <div className="header-text">
+            <h1>Edit Profile</h1>
+            <p className="subtitle">Update your personal information and settings</p>
+          </div>
+          {hasChanges && <span className="unsaved-badge">Unsaved changes</span>}
         </div>
 
-        <form onSubmit={handleSubmit} className="profile-form">
-          <div className="profile-card">
-            <div className="profile-card-header">
-              <Icon name="user" size={20} />
-              <h3>Personal Information</h3>
+        <form onSubmit={handleSubmit} className="edit-profile-form">
+          <div className="form-section">
+            <div className="section-header">
+              <div className="section-icon">
+                <Icon name="user" size={20} />
+              </div>
+              <div>
+                <h3>Personal Information</h3>
+                <p className="section-description">Your basic profile details</p>
+              </div>
             </div>
             
             <div className="form-grid">
               <div className="form-group full-width">
-                <label className="form-label">Full Name *</label>
+                <label className="form-label">
+                  <Icon name="user" size={16} />
+                  Full Name *
+                </label>
                 <input
                   type="text"
+                  className="form-input"
                   value={form.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter your full name"
                   required
                 />
               </div>
               
               <div className="form-group">
-                <label className="form-label">Email Address *</label>
+                <label className="form-label">
+                  <Icon name="mail" size={16} />
+                  Email Address *
+                </label>
                 <input
                   type="email"
+                  className="form-input"
                   value={form.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="your@email.com"
                   required
                 />
               </div>
               
               <div className="form-group">
-                <label className="form-label">Phone Number</label>
+                <label className="form-label">
+                  <Icon name="phone" size={16} />
+                  Phone Number
+                </label>
                 <input
                   type="tel"
+                  className="form-input"
                   value={form.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="Enter phone number"
+                  placeholder="+1 (555) 123-4567"
                 />
               </div>
             </div>
           </div>
 
-          <div className="profile-card">
-            <div className="profile-card-header">
-              <Icon name="mapPin" size={20} />
-              <h3>Address Information</h3>
+          <div className="form-section">
+            <div className="section-header">
+              <div className="section-icon">
+                <Icon name="mapPin" size={20} />
+              </div>
+              <div>
+                <h3>Address Information</h3>
+                <p className="section-description">Shipping and billing address</p>
+              </div>
             </div>
             
             <div className="form-grid">
               <div className="form-group full-width">
-                <label className="form-label">Street Address</label>
+                <label className="form-label">
+                  <Icon name="home" size={16} />
+                  Street Address
+                </label>
                 <input
                   type="text"
+                  className="form-input"
                   value={form.address.street}
                   onChange={(e) => handleInputChange('address.street', e.target.value)}
-                  placeholder="Enter street address"
+                  placeholder="123 Main Street, Apt 4B"
                 />
               </div>
               
@@ -212,19 +263,21 @@ const EditProfile = () => {
                 <label className="form-label">City</label>
                 <input
                   type="text"
+                  className="form-input"
                   value={form.address.city}
                   onChange={(e) => handleInputChange('address.city', e.target.value)}
-                  placeholder="Enter city"
+                  placeholder="New York"
                 />
               </div>
               
               <div className="form-group">
-                <label className="form-label">State</label>
+                <label className="form-label">State / Province</label>
                 <input
                   type="text"
+                  className="form-input"
                   value={form.address.state}
                   onChange={(e) => handleInputChange('address.state', e.target.value)}
-                  placeholder="Enter state"
+                  placeholder="NY"
                 />
               </div>
               
@@ -232,101 +285,154 @@ const EditProfile = () => {
                 <label className="form-label">Country</label>
                 <input
                   type="text"
+                  className="form-input"
                   value={form.address.country}
                   onChange={(e) => handleInputChange('address.country', e.target.value)}
-                  placeholder="Enter country"
+                  placeholder="United States"
                 />
               </div>
               
               <div className="form-group">
-                <label className="form-label">Zip Code</label>
+                <label className="form-label">Postal Code</label>
                 <input
                   type="text"
+                  className="form-input"
                   value={form.address.zipCode}
                   onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
-                  placeholder="Enter zip code"
+                  placeholder="10001"
                 />
               </div>
             </div>
           </div>
 
-          <div className="profile-form-actions">
-            <button type="button" onClick={() => navigate('/profile')} className="btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Icon name="check" size={18} />
-                  Save Changes
-                </>
-              )}
-            </button>
+          <div className="form-actions-sticky">
+            <div className="form-actions">
+              <button type="button" onClick={() => navigate('/profile')} className="btn-cancel">
+                Cancel
+              </button>
+              <button type="submit" disabled={loading || !hasChanges} className="btn-save">
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    Saving Changes...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="check" size={18} />
+                    Save Changes
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
 
-        <div className="profile-card">
-          <div className="profile-card-header">
-            <Icon name="lock" size={20} />
-            <h3>Change Password</h3>
+        <div className="form-section security-section">
+          <div className="section-header">
+            <div className="section-icon security-icon">
+              <Icon name="lock" size={20} />
+            </div>
+            <div>
+              <h3>Security Settings</h3>
+              <p className="section-description">Manage your password and account security</p>
+            </div>
           </div>
           
           {!showPasswordSection ? (
             <button
               onClick={() => setShowPasswordSection(true)}
-              className="btn-secondary"
+              className="btn-outline"
             >
-              Update Password
+              <Icon name="key" size={18} />
+              Change Password
             </button>
           ) : (
-            <form onSubmit={handlePasswordSubmit}>
+            <form onSubmit={handlePasswordSubmit} className="password-form">
               <div className="form-grid">
                 <div className="form-group full-width">
-                  <label className="form-label">Current Password *</label>
-                  <input
-                    type="password"
-                    value={passwordForm.currentPassword}
-                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                    required
-                  />
+                  <label className="form-label">
+                    <Icon name="lock" size={16} />
+                    Current Password *
+                  </label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      className="form-input"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                      placeholder="Enter current password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                      <Icon name={showCurrentPassword ? 'eyeOff' : 'eye'} size={18} />
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">New Password *</label>
-                  <input
-                    type="password"
-                    value={passwordForm.newPassword}
-                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                    required
-                    minLength="6"
-                  />
+                  <label className="form-label">
+                    <Icon name="key" size={16} />
+                    New Password *
+                  </label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      className="form-input"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                      placeholder="Min. 6 characters"
+                      required
+                      minLength="6"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      <Icon name={showNewPassword ? 'eyeOff' : 'eye'} size={18} />
+                    </button>
+                  </div>
+                  <p className="input-hint">Use at least 6 characters with letters and numbers</p>
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">Confirm New Password *</label>
-                  <input
-                    type="password"
-                    value={passwordForm.confirmPassword}
-                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                    required
-                    minLength="6"
-                  />
+                  <label className="form-label">
+                    <Icon name="check" size={16} />
+                    Confirm New Password *
+                  </label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      className="form-input"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                      placeholder="Re-enter new password"
+                      required
+                      minLength="6"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      <Icon name={showConfirmPassword ? 'eyeOff' : 'eye'} size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
               
-              <div className="profile-form-actions" style={{ marginTop: 'var(--space-4)' }}>
+              <div className="password-actions">
                 <button
                   type="button"
                   onClick={() => {
                     setShowPasswordSection(false)
                     setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
                   }}
-                  className="btn-secondary"
+                  className="btn-cancel"
                 >
                   Cancel
                 </button>
@@ -334,10 +440,13 @@ const EditProfile = () => {
                   {loading ? (
                     <>
                       <span className="spinner"></span>
-                      Updating...
+                      Updating Password...
                     </>
                   ) : (
-                    'Update Password'
+                    <>
+                      <Icon name="shield" size={18} />
+                      Update Password
+                    </>
                   )}
                 </button>
               </div>

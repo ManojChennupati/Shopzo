@@ -2,12 +2,15 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import dotenv from "dotenv";
 import { authRoute } from "./Routes/authRoutes.js";
 import productRoutes from "./Routes/productRoutes.js";
 import cartRoutes from "./Routes/cartRoutes.js";
 import orderRoutes from "./Routes/orderRoutes.js";
 import reviewRoutes from "./Routes/reviewRoutes.js";
 import { adminRoute } from "./Routes/adminRoutes.js";
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -32,7 +35,9 @@ app.post("/test-review", (req, res) => {
 
 async function connectDBandStartServer() {
   try {
-    await mongoose.connect("mongodb://localhost:27017/Shopzo");
+    // Use MongoDB Atlas or local MongoDB
+    const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/shopzo";
+    await mongoose.connect(MONGO_URI);
     console.log("DB is connected");
 
     app.listen(8080, () =>

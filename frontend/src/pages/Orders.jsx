@@ -115,7 +115,7 @@ const Orders = () => {
                   <div style={styles.shippingInfo}>
                     <span style={styles.shippingLabel}>📍 Shipping to:</span>
                     <span style={styles.shippingAddress}>
-                      {order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
+                      {order.ShippingAddress?.street}, {order.ShippingAddress?.city}, {order.ShippingAddress?.state} {order.ShippingAddress?.zipCode}
                     </span>
                   </div>
                   <div style={styles.totalSection}>
