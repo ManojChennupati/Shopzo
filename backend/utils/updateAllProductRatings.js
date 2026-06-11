@@ -1,5 +1,5 @@
 import Review from "../models/ReviewModel.js";
-import Product from "../models/productModel.js";
+import Product from "../models/ProductModel.js";
 
 // Utility function to recalculate ratings for all products
 export const updateAllProductRatings = async () => {

@@ -10,3 +10,6 @@ build
 .env.test.local
 .env.production.local
 *.pem
+
+# Ignore Google OAuth client secrets
+client_secret_*.json

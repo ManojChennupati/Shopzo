@@ -1,6 +1,6 @@
 import Review from "../models/ReviewModel.js";
 import Order from "../models/OrderModel.js";
-import Product from "../models/productModel.js";
+import Product from "../models/ProductModel.js";
 
 // Helper function to update product rating based on reviews
 const updateProductRating = async (productId) => {
