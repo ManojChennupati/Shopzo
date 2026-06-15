@@ -134,7 +134,7 @@ const ProductDetail = () => {
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0
 
-  const getInitials = (name) => name ? name.charAt(0).toUpperCase() : '?'
+  const getInitials = (name) => (name && name.length > 0) ? name.charAt(0).toUpperCase() : '?'
 
   return (
     <div className="pd-page">
@@ -269,7 +269,7 @@ const ProductDetail = () => {
             Customer Reviews ({reviews.length})
           </h2>
 
-          {user && (
+          {user ? (
             <div className="pd-review-form-card">
               <h3 className="pd-review-form-title">
                 <Icon name="edit" size={16} />
@@ -318,6 +318,20 @@ const ProductDetail = () => {
                 </button>
               </form>
             </div>
+          ) : (
+            <div className="pd-login-to-review">
+              <div className="pd-login-review-icon">
+                <StarIcon filled size={28} />
+              </div>
+              <div className="pd-login-review-text">
+                <h4>Share your experience</h4>
+                <p>Login to write a review and help other shoppers make better decisions.</p>
+              </div>
+              <div className="pd-login-review-actions">
+                <Link to="/login" className="pd-login-review-btn-primary">Login to Review</Link>
+                <Link to="/register" className="pd-login-review-btn-secondary">Create Account</Link>
+              </div>
+            </div>
           )}
 
           <div className="pd-reviews-divider" />
@@ -335,9 +349,9 @@ const ProductDetail = () => {
                 <div key={review._id} className="pd-review-card">
                   <div className="pd-review-head">
                     <div className="pd-review-author-row">
-                      <div className="pd-reviewer-avatar">{getInitials(review.userId.name)}</div>
+                      <div className="pd-reviewer-avatar">{getInitials(review.userId?.name)}</div>
                       <div>
-                        <div className="pd-reviewer-name">{review.userId.name}</div>
+                        <div className="pd-reviewer-name">{review.userId?.name || 'Anonymous'}</div>
                         <div className="pd-review-stars">
                           {[1, 2, 3, 4, 5].map(s => (
                             <StarIcon key={s} filled={s <= review.rating} size={13} />

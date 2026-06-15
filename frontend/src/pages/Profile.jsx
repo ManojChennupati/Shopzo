@@ -71,7 +71,7 @@ const Profile = () => {
           <div className="profile-card profile-main">
             <div className="profile-avatar-section">
               <div className="profile-avatar-large">
-                {user.name.charAt(0).toUpperCase()}
+                {user.name ? user.name.charAt(0).toUpperCase() : '?'}
               </div>
               <div className="profile-user-info">
                 <h2>{user.name}</h2>

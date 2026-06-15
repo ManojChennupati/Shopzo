@@ -564,6 +564,7 @@ const Checkout = () => {
               <div className="summary-items">
                 {items.map((item, index) => {
                   const product = buyNowItem ? item.productId : item.productId
+                  if (!product) return null
                   const thumbnail = product.thumbnail || (product.images && product.images[0])
                   const quantity = buyNowItem ? item.quantity : item.quantity
                   const price = buyNowItem ? item.priceAtAddTime : item.priceAtAddTime

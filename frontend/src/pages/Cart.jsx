@@ -96,16 +96,16 @@ const Cart = () => {
             <div className="cart-items-section">
               <div className="cart-items-heading">Items ({cart.totalItems})</div>
               {cart.items.map(item => (
-                <div key={item.productId._id} className="cart-item-card fade-in">
-                  <Link to={`/products/${item.productId._id}`} className="cart-item-thumbnail">
+                <div key={item.productId?._id} className="cart-item-card fade-in">
+                  <Link to={`/products/${item.productId?._id}`} className="cart-item-thumbnail">
                     <div className="cart-item-thumbnail-placeholder">
                       <Icon name="package" size={28} />
                     </div>
                   </Link>
 
                   <div className="cart-item-info">
-                    <Link to={`/products/${item.productId._id}`} className="cart-item-name">
-                      {item.productId.title}
+                    <Link to={`/products/${item.productId?._id}`} className="cart-item-name">
+                      {item.productId?.title || 'Product Unavailable'}
                     </Link>
                     <p className="cart-item-unit-price">₹{item.priceAtAddTime.toFixed(2)} each</p>
                   </div>
@@ -113,15 +113,15 @@ const Cart = () => {
                   <div className="cart-item-controls">
                     <div className="cart-qty-controls">
                       <button
-                        onClick={() => updateQuantity(item.productId._id, item.quantity - 1)}
-                        disabled={item.quantity <= 1 || updating[item.productId._id]}
+                        onClick={() => updateQuantity(item.productId?._id, item.quantity - 1)}
+                        disabled={item.quantity <= 1 || updating[item.productId?._id]}
                         className="cart-qty-btn"
                         aria-label="Decrease quantity"
                       >−</button>
                       <span className="cart-qty-display">{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item.productId._id, item.quantity + 1)}
-                        disabled={updating[item.productId._id]}
+                        onClick={() => updateQuantity(item.productId?._id, item.quantity + 1)}
+                        disabled={updating[item.productId?._id]}
                         className="cart-qty-btn"
                         aria-label="Increase quantity"
                       >+</button>
@@ -132,12 +132,12 @@ const Cart = () => {
                     </div>
 
                     <button
-                      onClick={() => removeItem(item.productId._id)}
-                      disabled={updating[item.productId._id]}
+                      onClick={() => removeItem(item.productId?._id)}
+                      disabled={updating[item.productId?._id]}
                       className="cart-remove-btn"
                       aria-label="Remove item"
                     >
-                      {updating[item.productId._id]
+                      {updating[item.productId?._id]
                         ? <Icon name="loader" size={16} />
                         : <Icon name="trash" size={16} />
                       }

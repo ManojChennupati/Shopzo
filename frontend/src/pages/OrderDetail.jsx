@@ -99,7 +99,7 @@ const OrderDetail = () => {
 
       <div style={styles.content}>
         {/* Status Section */}
-        <div style={styles.statusSection}>
+        <div style={styles.statusSection} className="od-responsive-status-grid">
           <div style={styles.statusCard}>
             <div style={styles.statusHeader}>
               <span style={styles.statusIcon}>{getStatusIcon(order.orderStatus)}</span>
@@ -161,8 +161,8 @@ const OrderDetail = () => {
               console.log(`Using thumbnail URL: ${thumbnailUrl}`);
               
               return (
-                <div key={idx} style={styles.itemCard}>
-                  <div style={styles.itemImageContainer}>
+                <div key={idx} style={styles.itemCard} className="od-responsive-item-card">
+                  <div style={styles.itemImageContainer} className="od-responsive-item-image">
                     {thumbnailUrl ? (
                       <img 
                         src={thumbnailUrl} 
@@ -182,14 +182,14 @@ const OrderDetail = () => {
                       📦
                     </div>
                   </div>
-                  <div style={styles.itemInfo}>
+                  <div style={styles.itemInfo} className="od-responsive-item-info">
                     <h4 style={styles.itemName}>{item.titleSnapshot}</h4>
                     <div style={styles.itemDetails}>
                       <span style={styles.itemQuantity}>Quantity: {item.quantity}</span>
                       <span style={styles.itemPrice}>₹{item.priceSnapshot.toFixed(2)} each</span>
                     </div>
                   </div>
-                  <div style={styles.itemTotal}>
+                  <div style={styles.itemTotal} className="od-responsive-item-total">
                     ₹{(item.priceSnapshot * item.quantity).toFixed(2)}
                   </div>
                 </div>

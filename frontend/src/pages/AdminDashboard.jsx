@@ -216,12 +216,21 @@ const AdminDashboard = () => {
   }
 
   const updateOrderStatus = async (id, status) => {
+    // Optimistic UI update to prevent dropdown from snapping back
+    // while the backend processes the update and sends the email
+    const originalOrders = [...orders]
+    setOrders(orders.map(order => 
+      order._id === id ? { ...order, orderStatus: status } : order
+    ))
+
     try {
       await orderAPI.updateStatus(id, { orderStatus: status })
       setMessage({ text: '✓ Order status updated!', type: 'success' })
       fetchOrders()
       setTimeout(() => setMessage({ text: '', type: '' }), 3000)
     } catch (err) {
+      // Revert if failed
+      setOrders(originalOrders)
       setMessage({ text: 'Failed to update order', type: 'error' })
     }
   }
@@ -237,13 +246,13 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} className="admin-responsive-container">
       <div style={styles.header}>
         <h1 style={styles.title}>⚙️ Admin Dashboard</h1>
         <p style={styles.subtitle}>Manage products and orders</p>
       </div>
 
-      <div style={styles.tabs}>
+      <div style={styles.tabs} className="admin-responsive-tabs">
         <button 
           onClick={() => setView('products')} 
           style={view === 'products' ? styles.activeTab : styles.tab}
@@ -297,7 +306,7 @@ const AdminDashboard = () => {
                 />
               </div>
 
-              <div style={styles.row}>
+              <div style={styles.row} className="admin-responsive-row">
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Price (₹) *</label>
                   <input 
@@ -326,7 +335,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div style={styles.row}>
+              <div style={styles.row} className="admin-responsive-row">
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Brand</label>
                   <input 
@@ -459,9 +468,9 @@ const AdminDashboard = () => {
             ) : (
               <div style={styles.productsList}>
                 {products.map(p => (
-                  <div key={p._id} style={styles.productItem}>
+                  <div key={p._id} style={styles.productItem} className="admin-responsive-product-item">
                     {p.thumbnail ? (
-                      <img src={p.thumbnail} alt={p.title} style={styles.productImage} />
+                      <img src={p.thumbnail} alt={p.title} style={styles.productImage} className="admin-responsive-product-image" />
                     ) : (
                       <div style={styles.productIcon}>📦</div>
                     )}
@@ -472,7 +481,7 @@ const AdminDashboard = () => {
                       </p>
                       {p.brand && <p style={styles.productBrand}>Brand: {p.brand}</p>}
                     </div>
-                    <div style={styles.productActions}>
+                    <div style={styles.productActions} className="admin-responsive-product-actions">
                       <div style={{
                         ...styles.stockBadge,
                         background: p.stock > 10 ? 'var(--success)' : p.stock > 0 ? '#FFA500' : 'var(--danger)'
@@ -508,15 +517,15 @@ const AdminDashboard = () => {
               <div style={styles.ordersList}>
                 {orders.map(order => (
                   <div key={order._id} style={styles.orderItem}>
-                    <div style={styles.orderItemHeader}>
+                    <div style={styles.orderItemHeader} className="admin-responsive-order-header">
                       <div>
                         <h3 style={styles.orderItemId}>Order #{order._id.slice(-8).toUpperCase()}</h3>
-                        <p style={styles.orderCustomer}>👤 {order.userId.name}</p>
+                        <p style={styles.orderCustomer}>👤 {order.userId?.name || 'Unknown User'}</p>
                         <p style={styles.orderDate}>
                           📅 {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <div style={styles.orderItemRight}>
+                      <div style={styles.orderItemRight} className="admin-responsive-order-right">
                         <div style={styles.orderAmount}>₹{order.totalAmount.toFixed(2)}</div>
                         <span style={{
                           ...styles.statusBadge,

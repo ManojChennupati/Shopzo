@@ -109,9 +109,9 @@ const Products = () => {
                   <div className="product-card-body">
                     <h3 className="product-card-title">{product.title}</h3>
                     <p className="product-card-desc">
-                      {product.description.length > 80
+                      {(product.description?.length ?? 0) > 80
                         ? `${product.description.substring(0, 80)}...`
-                        : product.description}
+                        : (product.description || '')}
                     </p>
                     <div className="product-card-footer">
                       <div className="product-price-group">
