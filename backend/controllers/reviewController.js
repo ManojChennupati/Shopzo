@@ -1,6 +1,7 @@
 import Review from "../models/ReviewModel.js";
 import Order from "../models/OrderModel.js";
 import Product from "../models/ProductModel.js";
+import User from "../models/userModel.js";
 
 // Helper function to update product rating based on reviews
 const updateProductRating = async (productId) => {
@@ -38,13 +39,18 @@ export const createReview = async (req, res) => {
         
         console.log('Creating review for user:', req.user.id, 'product:', productId);
         
+        // Fetch user name from DB to store in review
+        const reviewer = await User.findById(req.user.id).select('name');
+        const userName = reviewer ? reviewer.name : 'User';
+        
         // Allow multiple reviews from the same user - no duplicate check
         const review = await Review.create({
             userId: req.user.id,
             productId,
             rating,
             comment,
-            isApproved: true // Auto-approve reviews
+            isApproved: true, // Auto-approve reviews
+            userName
         });
 
         // Populate user info for immediate response

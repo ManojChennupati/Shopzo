@@ -14,7 +14,7 @@ const Checkout = () => {
   const [buyNowItem, setBuyNowItem] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [verifyingAddress, setVerifyingAddress] = useState(false)
+
   const [currentStep, setCurrentStep] = useState(1)
   const [form, setForm] = useState({
     shippingAddress: user?.address || { street: '', city: '', state: '', country: '', zipCode: '' },
@@ -79,13 +79,7 @@ const Checkout = () => {
         return
       }
     }
-    
-    // Verify address before submitting
-    const isAddressValid = await verifyAddress()
-    if (!isAddressValid) {
-      return
-    }
-    
+
     setSubmitting(true)
     
     try {
@@ -133,47 +127,6 @@ const Checkout = () => {
 
   const handleAddressChange = (field, value) => {
     setForm({ ...form, shippingAddress: { ...form.shippingAddress, [field]: value } })
-  }
-
-  const verifyAddress = async () => {
-    const { street, city, state, country } = form.shippingAddress
-    
-    if (!street || !city || !state || !country) {
-      toast.error('Please fill in all address fields')
-      return false
-    }
-
-    setVerifyingAddress(true)
-    try {
-      // Try city, state, country first (more likely to succeed)
-      const query = `${city}, ${state}, ${country}`
-      const apiKey = 'pk.1cc505b2ffe76a7a378b4bcb0ecd6c1e'
-      const url = `https://us1.locationiq.com/v1/search?key=${apiKey}&q=${encodeURIComponent(query)}&format=json`
-      
-      console.log('Verifying address:', query)
-      const response = await fetch(url)
-      const data = await response.json()
-      console.log('LocationIQ response:', data)
-      
-      if (data.error) {
-        toast.warning('Could not verify exact address, but proceeding with order')
-        return true
-      }
-      
-      if (data.length > 0) {
-        toast.success('Address verified successfully')
-        return true
-      } else {
-        toast.warning('Could not verify address, but proceeding with order')
-        return true
-      }
-    } catch (err) {
-      console.error('Address verification error:', err)
-      toast.warning('Could not verify address, but proceeding with order')
-      return true
-    } finally {
-      setVerifyingAddress(false)
-    }
   }
 
   const items = buyNowItem ? [buyNowItem] : cart.items
@@ -529,15 +482,10 @@ const Checkout = () => {
                   </button>
                   <button 
                     type="submit" 
-                    disabled={submitting || verifyingAddress}
+                    disabled={submitting}
                     className="btn-place-order"
                   >
-                    {verifyingAddress ? (
-                      <>
-                        <span className="spinner"></span>
-                        Verifying Address...
-                      </>
-                    ) : submitting ? (
+                    {submitting ? (
                       <>
                         <span className="spinner"></span>
                         Processing Order...

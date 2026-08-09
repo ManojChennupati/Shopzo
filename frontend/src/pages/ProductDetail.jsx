@@ -349,9 +349,9 @@ const ProductDetail = () => {
                 <div key={review._id} className="pd-review-card">
                   <div className="pd-review-head">
                     <div className="pd-review-author-row">
-                      <div className="pd-reviewer-avatar">{getInitials(review.userId?.name)}</div>
+                      <div className="pd-reviewer-avatar">{getInitials(review.userName || review.userId?.name)}</div>
                       <div>
-                        <div className="pd-reviewer-name">{review.userId?.name || 'Anonymous'}</div>
+                        <div className="pd-reviewer-name">{review.userName || review.userId?.name || 'Anonymous'}</div>
                         <div className="pd-review-stars">
                           {[1, 2, 3, 4, 5].map(s => (
                             <StarIcon key={s} filled={s <= review.rating} size={13} />

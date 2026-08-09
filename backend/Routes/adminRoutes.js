@@ -3,6 +3,7 @@ import { adminOnly } from "../Middlewares/adminMiddleware.js";
 import Product from "../models/ProductModel.js";
 import Order from "../models/OrderModel.js";
 import { updateAllProductRatings } from "../utils/updateAllProductRatings.js";
+import { sendOrderStatusEmail } from "../services/emailService.js";
 import { 
   updateStock, 
   updatePrice, 
@@ -186,8 +187,22 @@ adminRoute.put("/orders/:id/status", adminOnly, async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+
+    // Send email notification to the user
+    if (order.userId && order.userId.email) {
+      console.log(`Sending order status email to: ${order.userId.email}`);
+      const emailResult = await sendOrderStatusEmail(
+        order.userId.email,
+        order.userId.name,
+        order,
+        orderStatus
+      );
+      console.log('Email result:', emailResult);
+    } else {
+      console.log('No user email found for order, skipping email.');
+    }
     
-    res.json({ message: "Order status updated successfully", order });
+    res.json({ message: "Order status updated and email sent", order });
   } catch (err) {
     res.status(500).json({ message: "Failed to update order status", error: err.message });
   }

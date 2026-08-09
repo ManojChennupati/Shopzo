@@ -24,6 +24,10 @@ const ReviewSchema = new mongoose.Schema({
     isApproved:{
         type:Boolean,
         default:false
+    },
+    userName:{
+        type:String,
+        default:''
     }
 },
 {timestamps:true}
