@@ -9,6 +9,7 @@ import cartRoutes from "./Routes/cartRoutes.js";
 import orderRoutes from "./Routes/orderRoutes.js";
 import reviewRoutes from "./Routes/reviewRoutes.js";
 import { adminRoute } from "./Routes/adminRoutes.js";
+import { sendOrderConfirmationEmail } from "./services/emailService.js";
 
 dotenv.config();
 
@@ -45,6 +46,42 @@ app.use("/admin", adminRoute);
 
 // Test route
 app.get("/test", (req, res) => res.json({ message: "Server is running" }));
+
+// ── Email diagnostic endpoint ──────────────────────────────────────────────
+// Visit: GET /test-email  to verify email config on the deployed server
+app.get("/test-email", async (req, res) => {
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+
+  if (!emailUser || !emailPass) {
+    return res.status(500).json({
+      success: false,
+      message: "EMAIL_USER or EMAIL_PASS is missing from environment variables",
+      EMAIL_USER: emailUser ? "✅ set" : "❌ missing",
+      EMAIL_PASS: emailPass ? "✅ set" : "❌ missing"
+    });
+  }
+
+  const mockOrder = {
+    _id: { toString: () => "TESTDIAG00000001" },
+    createdAt: new Date(),
+    totalAmount: 999,
+    paymentMethod: "cod",
+    items: [{ titleSnapshot: "Test Product", quantity: 1, priceSnapshot: 999 }],
+    ShippingAddress: { street: "Test Street", city: "Hyderabad", state: "TS", zipCode: "500001", country: "India" }
+  };
+
+  const result = await sendOrderConfirmationEmail(emailUser, "Manoj Kumar", mockOrder);
+
+  res.json({
+    success: result.success,
+    message: result.success ? "Test email sent! Check your inbox." : "Email failed",
+    EMAIL_USER: "✅ set",
+    EMAIL_PASS: "✅ set",
+    error: result.error || null,
+    messageId: result.messageId || null
+  });
+});
 
 // Test review route
 app.post("/test-review", (req, res) => {
