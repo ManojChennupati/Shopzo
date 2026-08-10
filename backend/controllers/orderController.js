@@ -55,7 +55,7 @@ export const createOrder = async (req, res) => {
             // Send order confirmation email (non-blocking)
             // req.user already has email from JWT payload
             if (req.user?.email) {
-                sendOrderConfirmationEmail(req.user.email, req.user.name || 'Customer', order)
+                sendOrderConfirmationEmail(req.user.email, req.user.name, order)
                     .then(result => console.log('Confirmation email result (Buy Now):', result))
                     .catch(err => console.error('Confirmation email error:', err));
             }
@@ -110,7 +110,7 @@ export const createOrder = async (req, res) => {
         // Send order confirmation email (non-blocking)
         // req.user already has email from JWT payload
         if (req.user?.email) {
-            sendOrderConfirmationEmail(req.user.email, req.user.name || 'Customer', order)
+            sendOrderConfirmationEmail(req.user.email, req.user.name, order)
                 .then(result => console.log('Confirmation email result (Cart):', result))
                 .catch(err => console.error('Confirmation email error:', err));
         }
