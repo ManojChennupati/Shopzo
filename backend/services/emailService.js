@@ -281,4 +281,26 @@ export const sendOrderStatusEmail = async (userEmail, userName, order, newStatus
     }
 };
 
-export default { sendOrderStatusEmail };
+// Send order confirmation email immediately after order is placed
+export const sendOrderConfirmationEmail = async (userEmail, userName, order) => {
+    try {
+        const mailOptions = {
+            from: {
+                name: 'Shopzo - Order Confirmation',
+                address: process.env.EMAIL_USER
+            },
+            to: userEmail,
+            subject: `✅ Order Confirmed! #${order._id.toString().slice(-8).toUpperCase()} — Thank you, ${userName}!`,
+            html: getOrderStatusTemplate(order, 'PLACED')
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`✓ Order confirmation email sent to ${userEmail}: ${info.messageId}`);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('Error sending order confirmation email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+export default { sendOrderStatusEmail, sendOrderConfirmationEmail };

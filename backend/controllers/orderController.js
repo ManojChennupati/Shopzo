@@ -2,7 +2,8 @@ import Order from "../models/OrderModel.js";
 import Cart from "../models/cartModel.js";
 import Product from "../models/ProductModel.js";
 import Payment from "../models/PaymentModel.js";
-import { sendOrderStatusEmail } from "../services/emailService.js";
+import User from "../models/userModel.js";
+import { sendOrderStatusEmail, sendOrderConfirmationEmail } from "../services/emailService.js";
 
 export const createOrder = async (req, res) => {
     try {
@@ -52,6 +53,14 @@ export const createOrder = async (req, res) => {
                 ShippingAddress: shippingAddress
             });
 
+            // Send order confirmation email (non-blocking)
+            const user = await User.findById(req.user.id).select('name email');
+            if (user?.email) {
+                sendOrderConfirmationEmail(user.email, user.name, order)
+                    .then(result => console.log('Confirmation email result (Buy Now):', result))
+                    .catch(err => console.error('Confirmation email error:', err));
+            }
+
             return res.status(201).json({ message: "Order created", order });
         }
         
@@ -98,6 +107,14 @@ export const createOrder = async (req, res) => {
         });
 
         await Cart.findOneAndDelete({ userID: req.user.id });
+
+        // Send order confirmation email (non-blocking)
+        const user = await User.findById(req.user.id).select('name email');
+        if (user?.email) {
+            sendOrderConfirmationEmail(user.email, user.name, order)
+                .then(result => console.log('Confirmation email result (Cart):', result))
+                .catch(err => console.error('Confirmation email error:', err));
+        }
 
         res.status(201).json({ message: "Order created", order });
     } catch (err) {
