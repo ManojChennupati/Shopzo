@@ -1,30 +1,12 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // TLS
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    connectionTimeout: 10000,  // 10s max to connect
-    greetingTimeout: 10000,    // 10s max for SMTP greeting
-    socketTimeout: 15000       // 15s max per socket op
-});
+// Resend uses HTTPS (port 443) — works on all cloud hosts including Render free tier
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('Email service error:', error);
-    } else {
-        console.log('✓ Email service is ready to send emails');
-    }
-});
+console.log('✓ Email service initialized (Resend)');
 
 // Order status email templates
 const getOrderStatusTemplate = (order, status) => {
@@ -267,21 +249,22 @@ const getOrderStatusTemplate = (order, status) => {
 // Send order status update email
 export const sendOrderStatusEmail = async (userEmail, userName, order, newStatus) => {
     try {
-        const mailOptions = {
-            from: {
-                name: 'Shopzo - Order Updates',
-                address: process.env.EMAIL_USER
-            },
+        const { data, error } = await resend.emails.send({
+            from: 'Shopzo Order Updates <onboarding@resend.dev>',
             to: userEmail,
             subject: `Order #${order._id.toString().slice(-8).toUpperCase()} - ${newStatus}`,
             html: getOrderStatusTemplate(order, newStatus)
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`✓ Email sent to ${userEmail}: ${info.messageId}`);
-        return { success: true, messageId: info.messageId };
+        if (error) {
+            console.error('Resend error (status):', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`✓ Status email sent to ${userEmail}: ${data.id}`);
+        return { success: true, messageId: data.id };
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('Error sending status email:', error);
         return { success: false, error: error.message };
     }
 };
@@ -289,23 +272,25 @@ export const sendOrderStatusEmail = async (userEmail, userName, order, newStatus
 // Send order confirmation email immediately after order is placed
 export const sendOrderConfirmationEmail = async (userEmail, userName, order) => {
     try {
-        const mailOptions = {
-            from: {
-                name: 'Shopzo - Order Confirmation',
-                address: process.env.EMAIL_USER
-            },
+        const { data, error } = await resend.emails.send({
+            from: 'Shopzo <onboarding@resend.dev>',
             to: userEmail,
             subject: `✅ Order Confirmed! #${order._id.toString().slice(-8).toUpperCase()} — Thank you, ${userName}!`,
             html: getOrderStatusTemplate(order, 'PLACED')
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`✓ Order confirmation email sent to ${userEmail}: ${info.messageId}`);
-        return { success: true, messageId: info.messageId };
+        if (error) {
+            console.error('Resend error (confirmation):', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log(`✓ Confirmation email sent to ${userEmail}: ${data.id}`);
+        return { success: true, messageId: data.id };
     } catch (error) {
-        console.error('Error sending order confirmation email:', error);
+        console.error('Error sending confirmation email:', error);
         return { success: false, error: error.message };
     }
 };
 
 export default { sendOrderStatusEmail, sendOrderConfirmationEmail };
+
