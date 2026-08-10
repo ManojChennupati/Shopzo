@@ -2,7 +2,6 @@ import Order from "../models/OrderModel.js";
 import Cart from "../models/cartModel.js";
 import Product from "../models/ProductModel.js";
 import Payment from "../models/PaymentModel.js";
-import User from "../models/userModel.js";
 import { sendOrderStatusEmail, sendOrderConfirmationEmail } from "../services/emailService.js";
 
 export const createOrder = async (req, res) => {
@@ -54,9 +53,9 @@ export const createOrder = async (req, res) => {
             });
 
             // Send order confirmation email (non-blocking)
-            const user = await User.findById(req.user.id).select('name email');
-            if (user?.email) {
-                sendOrderConfirmationEmail(user.email, user.name, order)
+            // req.user already has email from JWT payload
+            if (req.user?.email) {
+                sendOrderConfirmationEmail(req.user.email, req.user.name || 'Customer', order)
                     .then(result => console.log('Confirmation email result (Buy Now):', result))
                     .catch(err => console.error('Confirmation email error:', err));
             }
@@ -109,9 +108,9 @@ export const createOrder = async (req, res) => {
         await Cart.findOneAndDelete({ userID: req.user.id });
 
         // Send order confirmation email (non-blocking)
-        const user = await User.findById(req.user.id).select('name email');
-        if (user?.email) {
-            sendOrderConfirmationEmail(user.email, user.name, order)
+        // req.user already has email from JWT payload
+        if (req.user?.email) {
+            sendOrderConfirmationEmail(req.user.email, req.user.name || 'Customer', order)
                 .then(result => console.log('Confirmation email result (Cart):', result))
                 .catch(err => console.error('Confirmation email error:', err));
         }
