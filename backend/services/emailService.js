@@ -1,12 +1,18 @@
-import { Resend } from 'resend';
+import axios from 'axios';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Resend uses HTTPS (port 443) — works on all cloud hosts including Render free tier
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Brevo HTTP API — uses port 443 (HTTPS), works on all cloud hosts including Render free tier
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-console.log('✓ Email service initialized (Resend)');
+const brevoHeaders = {
+    'accept': 'application/json',
+    'content-type': 'application/json',
+    'api-key': process.env.BREVO_API_KEY   // xkeysib-... from Brevo → SMTP & API → API Keys
+};
+
+console.log('✓ Email service initialized (Brevo HTTP API)');
 
 // Order status email templates
 const getOrderStatusTemplate = (order, status) => {
@@ -166,9 +172,7 @@ const getOrderStatusTemplate = (order, status) => {
         .brand {
             font-size: 24px;
             font-weight: 800;
-            background: linear-gradient(135deg, #FF6B35, #E85A28);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #FF6B35;
             margin-bottom: 10px;
         }
         .support-link {
@@ -235,7 +239,7 @@ const getOrderStatusTemplate = (order, status) => {
         <div class="footer">
             <div class="brand">🛒 Shopzo</div>
             <p class="footer-text">Thank you for shopping with us!</p>
-            <p class="footer-text">Need help? <a href="mailto:${process.env.EMAIL_USER}" class="support-link">Contact Support</a></p>
+            <p class="footer-text">Need help? <a href="mailto:${process.env.BREVO_SENDER_EMAIL}" class="support-link">Contact Support</a></p>
             <p class="footer-text" style="margin-top: 20px; font-size: 12px; color: #aaa;">
                 This is an automated email. Please do not reply to this message.
             </p>
@@ -246,51 +250,58 @@ const getOrderStatusTemplate = (order, status) => {
     `;
 };
 
+// Core send function using Brevo HTTP API
+const sendViaBrevo = async (to, toName, subject, htmlContent, senderName) => {
+    const payload = {
+        sender: {
+            name: senderName,
+            email: process.env.BREVO_SENDER_EMAIL
+        },
+        to: [{ email: to, name: toName }],
+        subject,
+        htmlContent
+    };
+
+    const response = await axios.post(BREVO_API_URL, payload, { headers: brevoHeaders });
+    return response.data.messageId;
+};
+
 // Send order status update email
 export const sendOrderStatusEmail = async (userEmail, userName, order, newStatus) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: 'Shopzo Order Updates <onboarding@resend.dev>',
-            to: userEmail,
-            subject: `Order #${order._id.toString().slice(-8).toUpperCase()} - ${newStatus}`,
-            html: getOrderStatusTemplate(order, newStatus)
-        });
-
-        if (error) {
-            console.error('Resend error (status):', error);
-            return { success: false, error: error.message };
-        }
-
-        console.log(`✓ Status email sent to ${userEmail}: ${data.id}`);
-        return { success: true, messageId: data.id };
+        const messageId = await sendViaBrevo(
+            userEmail,
+            userName,
+            `Order #${order._id.toString().slice(-8).toUpperCase()} - ${newStatus}`,
+            getOrderStatusTemplate(order, newStatus),
+            'Shopzo Order Updates'
+        );
+        console.log(`✓ Status email sent to ${userEmail}: ${messageId}`);
+        return { success: true, messageId };
     } catch (error) {
-        console.error('Error sending status email:', error);
-        return { success: false, error: error.message };
+        const errMsg = error?.response?.data?.message || error.message;
+        console.error('Brevo HTTP error (status):', errMsg);
+        return { success: false, error: errMsg };
     }
 };
 
 // Send order confirmation email immediately after order is placed
 export const sendOrderConfirmationEmail = async (userEmail, userName, order) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: 'Shopzo <onboarding@resend.dev>',
-            to: userEmail,
-            subject: `✅ Order Confirmed! #${order._id.toString().slice(-8).toUpperCase()} — Thank you, ${userName}!`,
-            html: getOrderStatusTemplate(order, 'PLACED')
-        });
-
-        if (error) {
-            console.error('Resend error (confirmation):', error);
-            return { success: false, error: error.message };
-        }
-
-        console.log(`✓ Confirmation email sent to ${userEmail}: ${data.id}`);
-        return { success: true, messageId: data.id };
+        const messageId = await sendViaBrevo(
+            userEmail,
+            userName,
+            `✅ Order Confirmed! #${order._id.toString().slice(-8).toUpperCase()} — Thank you, ${userName}!`,
+            getOrderStatusTemplate(order, 'PLACED'),
+            'Shopzo'
+        );
+        console.log(`✓ Confirmation email sent to ${userEmail}: ${messageId}`);
+        return { success: true, messageId };
     } catch (error) {
-        console.error('Error sending confirmation email:', error);
-        return { success: false, error: error.message };
+        const errMsg = error?.response?.data?.message || error.message;
+        console.error('Brevo HTTP error (confirmation):', errMsg);
+        return { success: false, error: errMsg };
     }
 };
 
 export default { sendOrderStatusEmail, sendOrderConfirmationEmail };
-
