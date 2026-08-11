@@ -35,20 +35,19 @@
 <!-- Take a screenshot of the cart page with items in it and save as screenshots/cart.png -->
 ![Shopping Cart](./screenshots/cart.png)
 
-### 💳 Checkout
-<!-- Take a screenshot of the checkout page showing address and payment fields and save as screenshots/checkout.png -->
-![Checkout](./screenshots/checkout.png)
+### 💳 Checkout — Shipping
+![Checkout Shipping](./screenshots/checkout.png)
+
+### 💰 Checkout — Payment
+![Checkout Payment](./screenshots/checkout-payment.png)
 
 ### 📋 Order History & Tracking
-<!-- Take a screenshot of the orders list page and save as screenshots/orders.png -->
 ![Orders](./screenshots/orders.png)
 
 ### 🛠️ Admin Dashboard
-<!-- Take a screenshot of the admin dashboard showing product/order management and save as screenshots/admin.png -->
 ![Admin Dashboard](./screenshots/admin.png)
 
 ### 📧 Order Confirmation Email
-<!-- Take a screenshot of the HTML order status email received in a mailbox and save as screenshots/email.png -->
 ![Email Notification](./screenshots/email.png)
 
 ---
@@ -77,7 +76,7 @@
 - Order history and detailed order view per user
 
 ### 📧 Email Notifications
-- **HTML-formatted transactional emails** via Nodemailer (Gmail SMTP)
+- **HTML-formatted transactional emails** via **Brevo HTTP API** (300 free emails/day, Render-compatible)
 - Automatic emails triggered on order status changes: `PLACED`, `SHIPPED`, `DELIVERED`, `CANCELLED`
 - Branded email templates with order summary, items, and shipping address
 
