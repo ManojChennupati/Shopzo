@@ -6,11 +6,11 @@ dotenv.config();
 // Brevo HTTP API — uses port 443 (HTTPS), works on all cloud hosts including Render free tier
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-const brevoHeaders = {
-    'accept': 'application/json',
-    'content-type': 'application/json',
-    'api-key': process.env.BREVO_API_KEY   // xkeysib-... from Brevo → SMTP & API → API Keys
-};
+if (!process.env.BREVO_API_KEY) {
+    console.error('❌ BREVO_API_KEY is not set! Add it to your Render environment variables.');
+} else {
+    console.log('✓ BREVO_API_KEY loaded, length:', process.env.BREVO_API_KEY.trim().length);
+}
 
 console.log('✓ Email service initialized (Brevo HTTP API)');
 
@@ -252,6 +252,8 @@ const getOrderStatusTemplate = (order, status) => {
 
 // Core send function using Brevo HTTP API
 const sendViaBrevo = async (to, toName, subject, htmlContent, senderName) => {
+    const apiKey = (process.env.BREVO_API_KEY || '').trim();
+
     const payload = {
         sender: {
             name: senderName,
@@ -262,7 +264,13 @@ const sendViaBrevo = async (to, toName, subject, htmlContent, senderName) => {
         htmlContent
     };
 
-    const response = await axios.post(BREVO_API_URL, payload, { headers: brevoHeaders });
+    const headers = {
+        'accept': 'application/json',
+        'content-type': 'application/json',
+        'api-key': apiKey
+    };
+
+    const response = await axios.post(BREVO_API_URL, payload, { headers });
     return response.data.messageId;
 };
 
