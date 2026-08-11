@@ -375,14 +375,6 @@ npm test
 # Runs Mocha tests in the /tests directory
 ```
 
----
-
-## 📃 License
-
-This project is licensed under the **ISC License**.
-
----
-
 <div align="center">
 
 **Built with ❤️ by Manoj Kumar Chennupati**
