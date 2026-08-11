@@ -377,7 +377,7 @@ npm test
 
 <div align="center">
 
-**Built with ❤️ by Manoj Kumar Chennupati**
+**Built with ❤️ by Chennupati Manoj Kumar**
 
 [LinkedIn](https://linkedin.com/in/chennupati-manoj-kumar) · [GitHub](https://github.com/ManojChennupati)
 
