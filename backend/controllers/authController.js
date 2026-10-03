@@ -117,19 +117,13 @@ export const googleAuth = async (req, res) => {
     try {
         const { credential } = req.body;
         
-        console.log('Google Auth Request received');
-        
         if (!credential) {
-            console.log('No credential provided');
             return res.status(400).json({ message: "No credential provided" });
         }
         
-        console.log('Decoding credential...');
-        
-        // Decode JWT token
+        // Decode JWT token payload
         const parts = credential.split('.');
         if (parts.length !== 3) {
-            console.log('Invalid token format');
             return res.status(400).json({ message: "Invalid token format" });
         }
         
@@ -138,18 +132,14 @@ export const googleAuth = async (req, res) => {
         const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
         const googleUser = JSON.parse(jsonPayload);
         
-        console.log('Google user:', googleUser.email);
-        
         if (!googleUser.email) {
-            console.log('No email in token');
             return res.status(400).json({ message: "Invalid Google token" });
         }
         
-        // Check if user exists
+        // Check if user exists, create if not
         let user = await User.findOne({ email: googleUser.email });
         
         if (!user) {
-            console.log('Creating new user:', googleUser.email);
             user = await User.create({
                 name: googleUser.name,
                 email: googleUser.email,
@@ -165,12 +155,9 @@ export const googleAuth = async (req, res) => {
                 role: "USER",
                 isActive: true
             });
-        } else {
-            console.log('User exists:', googleUser.email);
         }
         
         const token = generateToken(user);
-        console.log('Login successful for:', googleUser.email);
         
         res.json({ 
             message: "Google login successful",

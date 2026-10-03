@@ -95,22 +95,16 @@ const Checkout = () => {
             priceAtAddTime: buyNowItem.priceAtAddTime
           }]
         }
-        console.log('Buy Now Order Data:', orderData)
         const { data } = await orderAPI.create(orderData)
-        console.log('Order created:', data)
         await orderAPI.processPayment({ orderId: data.order._id, provider: form.paymentMethod })
-        console.log('Payment processed')
       } else {
         // For cart checkout
         const orderData = {
           shippingAddress: form.shippingAddress,
           paymentMethod: form.paymentMethod
         }
-        console.log('Cart Checkout Data:', orderData)
         const { data } = await orderAPI.create(orderData)
-        console.log('Order created:', data)
         await orderAPI.processPayment({ orderId: data.order._id, provider: form.paymentMethod })
-        console.log('Payment processed')
       }
       toast.success('🎉 Order placed successfully!')
       // Navigate to orders page after short delay

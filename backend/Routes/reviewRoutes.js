@@ -4,12 +4,7 @@ import { authenticate, isAdmin } from "../Middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", (req, res, next) => {
-    console.log('=== REVIEW ROUTE HIT ===');
-    console.log('Request body:', req.body);
-    console.log('Request headers:', req.headers);
-    next();
-}, authenticate, createReview);
+router.post("/", authenticate, createReview);
 router.get("/:productId", getProductReviews);
 router.get("/admin/:productId", authenticate, isAdmin, getAllProductReviews);
 router.put("/:id/approve", authenticate, isAdmin, approveReview);

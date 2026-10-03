@@ -155,9 +155,9 @@ const ProductDetail = () => {
                 <Icon name="package" size={80} />
               </div>
             )}
-            {product.discountPrice && (
+            {product.discountPercentage > 0 && (
               <div className="pd-discount-badge">
-                {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
+                {Math.round(product.discountPercentage)}% OFF
               </div>
             )}
           </div>
@@ -184,8 +184,12 @@ const ProductDetail = () => {
 
             <div className="pd-price-box">
               <div className="pd-price-group">
-                <span className="pd-price-current">₹{product.discountPrice || product.price}</span>
-                {product.discountPrice && (
+                <span className="pd-price-current">
+                  ₹{product.discountPercentage > 0
+                    ? (product.price * (1 - product.discountPercentage / 100)).toFixed(2)
+                    : product.price}
+                </span>
+                {product.discountPercentage > 0 && (
                   <span className="pd-price-original">₹{product.price}</span>
                 )}
               </div>

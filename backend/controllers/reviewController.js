@@ -26,18 +26,11 @@ const updateProductRating = async (productId) => {
 
 export const createReview = async (req, res) => {
     try {
-        console.log('=== CREATE REVIEW CONTROLLER ===');
-        console.log('Request body:', req.body);
-        console.log('User from middleware:', req.user);
-        
         const { productId, rating, comment } = req.body;
         
         if (!productId || !rating || !comment) {
-            console.log('Missing required fields:', { productId, rating, comment });
             return res.status(400).json({ message: "Missing required fields: productId, rating, comment" });
         }
-        
-        console.log('Creating review for user:', req.user.id, 'product:', productId);
         
         // Fetch user name from DB to store in review
         const reviewer = await User.findById(req.user.id).select('name');
@@ -55,8 +48,6 @@ export const createReview = async (req, res) => {
 
         // Populate user info for immediate response
         await review.populate('userId', 'name email');
-        
-        console.log('Review created successfully:', review);
         
         // Update product rating based on all reviews
         await updateProductRating(productId);
