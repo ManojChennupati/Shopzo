@@ -116,7 +116,6 @@
 | **Email** | Nodemailer (Gmail SMTP) | Transactional email delivery |
 | **HTTP** | Axios | API communication |
 | **Container** | Docker | Containerized deployment |
-| **Testing** | Mocha | Backend unit tests |
 
 ---
 
@@ -274,13 +273,6 @@ docker build -t shopzo-frontend .
 docker run -p 5173:80 shopzo-frontend
 ```
 
-### 5. Create Admin Account
-
-```bash
-cd backend
-node createAdmin.js
-```
-
 ---
 
 ## 📡 API Reference
@@ -367,13 +359,6 @@ PLACED  →  SHIPPED  →  DELIVERED
 
 ---
 
-## 🧪 Running Tests
-
-```bash
-cd backend
-npm test
-# Runs Mocha tests in the /tests directory
-```
 
 <div align="center">
 

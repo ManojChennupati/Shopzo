@@ -16,7 +16,6 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "mocha tests/**/*.test.js --timeout 10000",
     "start": "node server.js"
   },
   "keywords": [],
