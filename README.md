@@ -19,36 +19,17 @@
 
 ## 📸 Screenshots
 
-### 🏠 Home — Product Catalog
-<!-- Take a screenshot of the main products listing page and save as screenshots/products.png -->
-![Product Catalog](./screenshots/products.png)
-
-### 🔐 Login & Google OAuth
-<!-- Take a screenshot of the login page showing the Google Sign-In button and save as screenshots/login.png -->
-![Login Page](./screenshots/login.png)
-
-### 📦 Product Detail & Reviews
-<!-- Take a screenshot of a product's detail page with ratings/reviews visible and save as screenshots/product-detail.png -->
-![Product Detail](./screenshots/product-detail.png)
-
-### 🛒 Shopping Cart
-<!-- Take a screenshot of the cart page with items in it and save as screenshots/cart.png -->
-![Shopping Cart](./screenshots/cart.png)
-
-### 💳 Checkout — Shipping
-![Checkout Shipping](./screenshots/checkout.png)
-
-### 💰 Checkout — Payment
-![Checkout Payment](./screenshots/checkout-payment.png)
-
-### 📋 Order History & Tracking
-![Orders](./screenshots/orders.png)
-
-### 🛠️ Admin Dashboard
-![Admin Dashboard](./screenshots/admin.png)
-
-### 📧 Order Confirmation Email
-![Email Notification](./screenshots/email.png)
+| Page | Link |
+|------|------|
+| 🏠 Home — Product Catalog | [View Screenshot](./screenshots/products.png) |
+| 🔐 Login & Google OAuth | [View Screenshot](./screenshots/login.png) |
+| 📦 Product Detail & Reviews | [View Screenshot](./screenshots/product-detail.png) |
+| 🛒 Shopping Cart | [View Screenshot](./screenshots/cart.png) |
+| 💳 Checkout — Shipping | [View Screenshot](./screenshots/checkout.png) |
+| 💰 Checkout — Payment | [View Screenshot](./screenshots/checkout-payment.png) |
+| 📋 Order History & Tracking | [View Screenshot](./screenshots/orders.png) |
+| 🛠️ Admin Dashboard | [View Screenshot](./screenshots/admin.png) |
+| 📧 Order Confirmation Email | [View Screenshot](./screenshots/email.png) |
 
 ---
 
