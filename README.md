@@ -121,6 +121,8 @@
 
 ## 🏗️ Project Architecture
 
+> 🔍 **[View Interactive Workflow Visualization](https://manojchennupati.github.io/workflow-visualization/)** — Explore the full application flow interactively.
+
 ```
 Shopzo/
 │
